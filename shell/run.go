@@ -131,14 +131,14 @@ func executeCmd(opt Options, hostname string, config *ssh.ClientConfig) executeR
 }
 
 func Run(options ...func(*Options)) bool {
-	// in 5 seconds the message will come to timeout channel
 	opt := Options{}
 	for _, option := range options {
 		option(&opt)
 	}
 
-	timeout := time.After(5 * time.Second)
-	results := make(chan executeResult, len(opt.machines))
+	// in 20 seconds the message will come to timeout channel
+	timeout := time.After(20 * time.Second)
+	results := make(chan executeResult, len(opt.machines)+1)
 
 	config := &ssh.ClientConfig{
 		User: opt.user,
@@ -155,6 +155,8 @@ func Run(options ...func(*Options)) bool {
 		}(m)
 	}
 
+	retval := true
+
 	for i := 0; i < len(opt.machines); i++ {
 		select {
 		case res := <-results:
@@ -162,12 +164,12 @@ func Run(options ...func(*Options)) bool {
 				fmt.Print(res.result)
 			} else {
 				fmt.Println(res.err)
-				return false
+				retval = false
 			}
 		case <-timeout:
 			fmt.Println("Timed out!")
-			return false
+			retval = false
 		}
 	}
-	return true
+	return retval
 }
