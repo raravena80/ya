@@ -28,6 +28,7 @@ var (
 	user     string
 	key      string
 	port     string
+	timeout  string
 	machines []string
 )
 
@@ -67,6 +68,8 @@ func init() {
 	viper.BindPFlag("ya.key", RootCmd.PersistentFlags().Lookup("key"))
 	RootCmd.PersistentFlags().BoolP("useagent", "a", false, "Use agent for authentication")
 	viper.BindPFlag("ya.useagent", RootCmd.PersistentFlags().Lookup("useagent"))
+	RootCmd.PersistentFlags().StringVarP(&timeout, "timeout", "t", "5", "Timeout for connection")
+	viper.BindPFlag("ya.timeout", RootCmd.PersistentFlags().Lookup("timeout"))
 }
 
 // initConfig reads in config file and ENV variables if set.

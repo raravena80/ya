@@ -17,6 +17,7 @@ package shell
 import (
 	"fmt"
 	glssh "github.com/gliderlabs/ssh"
+	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/testdata"
@@ -292,6 +293,7 @@ func TestRun(t *testing.T) {
 		port     string
 		user     string
 		cmd      string
+		timeout  string
 		key      mockSSHKey
 		useagent bool
 		expected bool
@@ -306,6 +308,7 @@ func TestRun(t *testing.T) {
 				content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
+			timeout:  "5",
 			expected: true,
 		},
 		{name: "Basic with valid rsa key wrong hostname",
@@ -318,6 +321,7 @@ func TestRun(t *testing.T) {
 				content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
+			timeout:  "5",
 			expected: false,
 		},
 		{name: "Basic with valid rsa key wrong port",
@@ -330,6 +334,7 @@ func TestRun(t *testing.T) {
 				content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
+			timeout:  "5",
 			expected: false,
 		},
 		{name: "Basic with valid rsa key Google endpoint",
@@ -342,6 +347,7 @@ func TestRun(t *testing.T) {
 				content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
+			timeout:  "1",
 			expected: false,
 		},
 	}
@@ -354,12 +360,13 @@ func TestRun(t *testing.T) {
 			if tt.key.keyname != "" {
 				ioutil.WriteFile(tt.key.keyname, tt.key.content, 0644)
 			}
-			returned := Run(Machines(tt.machines),
-				User(tt.user),
-				Port(tt.port),
-				Cmd(tt.cmd),
-				Key(tt.key.keyname),
-				UseAgent(tt.useagent))
+			returned := Run(common.SetMachines(tt.machines),
+				common.SetUser(tt.user),
+				common.SetPort(tt.port),
+				common.SetCmd(tt.cmd),
+				common.SetKey(tt.key.keyname),
+				common.SetUseAgent(tt.useagent),
+				common.SetTimeout(tt.timeout))
 
 			if !(returned == tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)

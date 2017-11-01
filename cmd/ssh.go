@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/shell"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,19 +30,21 @@ var sshCmd = &cobra.Command{
 	Long: `Run a command across multiple servers,
 using SSH.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var options []func(*shell.Options)
+		var options []func(*common.Options)
 		options = append(options,
-			shell.Machines(viper.GetStringSlice("ya.machines")))
+			common.SetMachines(viper.GetStringSlice("ya.machines")))
 		options = append(options,
-			shell.User(viper.GetString("ya.user")))
+			common.SetUser(viper.GetString("ya.user")))
 		options = append(options,
-			shell.Port(viper.GetString("ya.port")))
+			common.SetPort(viper.GetString("ya.port")))
 		options = append(options,
-			shell.Cmd(viper.GetString("ya.command")))
+			common.SetCmd(viper.GetString("ya.command")))
 		options = append(options,
-			shell.Key(viper.GetString("ya.key")))
+			common.SetKey(viper.GetString("ya.key")))
 		options = append(options,
-			shell.UseAgent(viper.GetBool("ya.useagent")))
+			common.SetUseAgent(viper.GetBool("ya.useagent")))
+		options = append(options,
+			common.SetTimeout(viper.GetString("ya.timeout")))
 		shell.Run(options...)
 	},
 }

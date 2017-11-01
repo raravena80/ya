@@ -17,62 +17,19 @@ package shell
 import (
 	"bytes"
 	"fmt"
+	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"io/ioutil"
 	"net"
 	"os"
+	"strconv"
 	"time"
 )
-
-type Options struct {
-	machines []string
-	port     string
-	user     string
-	cmd      string
-	key      string
-	useAgent bool
-}
 
 type executeResult struct {
 	result string
 	err    error
-}
-
-func User(u string) func(*Options) {
-	return func(e *Options) {
-		e.user = u
-	}
-}
-
-func Port(p string) func(*Options) {
-	return func(e *Options) {
-		e.port = p
-	}
-}
-
-func Cmd(c string) func(*Options) {
-	return func(e *Options) {
-		e.cmd = c
-	}
-}
-
-func Machines(m []string) func(*Options) {
-	return func(e *Options) {
-		e.machines = m
-	}
-}
-
-func Key(k string) func(*Options) {
-	return func(e *Options) {
-		e.key = k
-	}
-}
-
-func UseAgent(u bool) func(*Options) {
-	return func(e *Options) {
-		e.useAgent = u
-	}
 }
 
 func makeSigner(keyname string) (signer ssh.Signer, err error) {
@@ -110,9 +67,9 @@ func makeKeyring(key string, useAgent bool) ssh.AuthMethod {
 	return ssh.PublicKeys(signers...)
 }
 
-func executeCmd(opt Options, hostname string, config *ssh.ClientConfig) executeResult {
+func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
 
-	conn, err := ssh.Dial("tcp", hostname+":"+opt.port, config)
+	conn, err := ssh.Dial("tcp", hostname+":"+opt.Port, config)
 
 	if err != nil {
 		return executeResult{result: "",
@@ -124,31 +81,32 @@ func executeCmd(opt Options, hostname string, config *ssh.ClientConfig) executeR
 
 	var stdoutBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
-	err = session.Run(opt.cmd)
+	err = session.Run(opt.Cmd)
 
 	return executeResult{result: hostname + ":\n" + stdoutBuf.String(),
 		err: err}
 }
 
-func Run(options ...func(*Options)) bool {
-	opt := Options{}
+func Run(options ...func(*common.Options)) bool {
+	opt := common.Options{}
 	for _, option := range options {
 		option(&opt)
 	}
 
-	// in 20 seconds the message will come to timeout channel
-	timeout := time.After(20 * time.Second)
-	results := make(chan executeResult, len(opt.machines)+1)
+	// in t seconds the message will come to timeout channel
+	t, _ := strconv.ParseInt(opt.Timeout, 10, 64)
+	timeout := time.After(time.Duration(t) * time.Second)
+	results := make(chan executeResult, len(opt.Machines)+1)
 
 	config := &ssh.ClientConfig{
-		User: opt.user,
+		User: opt.User,
 		Auth: []ssh.AuthMethod{
-			makeKeyring(opt.key, opt.useAgent),
+			makeKeyring(opt.Key, opt.UseAgent),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	for _, m := range opt.machines {
+	for _, m := range opt.Machines {
 		go func(hostname string) {
 			results <- executeCmd(opt, hostname, config)
 			// we’ll write results into the buffered channel of strings
@@ -157,7 +115,7 @@ func Run(options ...func(*Options)) bool {
 
 	retval := true
 
-	for i := 0; i < len(opt.machines); i++ {
+	for i := 0; i < len(opt.Machines); i++ {
 		select {
 		case res := <-results:
 			if res.err == nil {
