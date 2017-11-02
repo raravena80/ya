@@ -23,7 +23,7 @@ import (
 	"net"
 )
 
-type MockSSHKey struct {
+type MockSshKey struct {
 	Keyname string
 	Content []byte
 	Privkey agent.AddedKey
@@ -64,19 +64,19 @@ func SetupSshAgent(socketFile string) {
 	<-done
 }
 
-func AddKeytoSSHAgent(key agent.AddedKey, s string) {
+func AddKeytoSshAgent(key agent.AddedKey, s string) {
 	aConn, _ := net.Dial("unix", s)
 	sshAgent := agent.NewClient(aConn)
 	sshAgent.Add(key)
 }
 
-func RemoveKeyfromSSHAgent(key ssh.PublicKey, s string) {
+func RemoveKeyfromSshAgent(key ssh.PublicKey, s string) {
 	aConn, _ := net.Dial("unix", s)
 	sshAgent := agent.NewClient(aConn)
 	sshAgent.Remove(key)
 }
 
-func StartSSHServer(publicKeys map[string]ssh.PublicKey) {
+func StartSshServer(publicKeys map[string]ssh.PublicKey) {
 	done := make(chan bool, 1)
 	go func(done chan<- bool) {
 		glssh.Handle(func(s glssh.Session) {

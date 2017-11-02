@@ -21,7 +21,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/testdata"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"testing"
 )
@@ -30,7 +29,6 @@ var (
 	testPrivateKeys map[string]interface{}
 	testSigners     map[string]ssh.Signer
 	testPublicKeys  map[string]ssh.PublicKey
-	sshAgentSocket  string
 )
 
 func init() {
@@ -53,10 +51,7 @@ func init() {
 		testPublicKeys[t] = testSigners[t].PublicKey()
 	}
 
-	randomStr := fmt.Sprintf("%v", rand.Intn(5000))
-	sshAgentSocket = "/tmp/gosocket" + randomStr + ".sock"
-	test.SetupSshAgent(sshAgentSocket)
-	test.StartSSHServer(testPublicKeys)
+	test.StartSshServer(testPublicKeys)
 }
 
 func TestRun(t *testing.T) {
@@ -67,7 +62,7 @@ func TestRun(t *testing.T) {
 		user     string
 		cmd      string
 		timeout  string
-		key      test.MockSSHKey
+		key      test.MockSshKey
 		useagent bool
 		expected bool
 	}{
@@ -76,7 +71,7 @@ func TestRun(t *testing.T) {
 			port:     "2222",
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSSHKey{
+			key: test.MockSshKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -89,7 +84,7 @@ func TestRun(t *testing.T) {
 			port:     "2222",
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSSHKey{
+			key: test.MockSshKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -102,7 +97,7 @@ func TestRun(t *testing.T) {
 			port:     "2223",
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSSHKey{
+			key: test.MockSshKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -115,7 +110,7 @@ func TestRun(t *testing.T) {
 			port:     "22",
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSSHKey{
+			key: test.MockSshKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -126,10 +121,6 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// TODO: more tests with agent
-			if tt.useagent == true {
-				test.AddKeytoSSHAgent(tt.key.Privkey, sshAgentSocket)
-			}
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
 				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
@@ -140,37 +131,14 @@ func TestRun(t *testing.T) {
 				common.SetCmd(tt.cmd),
 				common.SetKey(tt.key.Keyname),
 				common.SetUseAgent(tt.useagent),
-				common.SetTimeout(tt.timeout),
-				common.SetAgentSock(sshAgentSocket))
+				common.SetTimeout(tt.timeout))
 
 			if !(returned == tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
-			}
-			if tt.useagent == true {
-				test.RemoveKeyfromSSHAgent(tt.key.Pubkey, sshAgentSocket)
 			}
 			if tt.key.Keyname != "" {
 				os.Remove(tt.key.Keyname)
 			}
 		})
-	}
-}
-
-func TestTearDown(t *testing.T) {
-	tests := []struct {
-		name string
-		id   string
-	}{
-		{name: "Teardown SSH Agent",
-			id: "sshAgentTdown"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.id == "sshAgentTdown" {
-				os.Remove(sshAgentSocket)
-			}
-
-		})
-
 	}
 }
