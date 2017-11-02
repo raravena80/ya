@@ -33,8 +33,10 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 	conn, err := ssh.Dial("tcp", hostname+":"+opt.Port, config)
 
 	if err != nil {
-		return executeResult{result: "",
-			err: err}
+		return executeResult{
+			result: "Connection refused",
+			err:    err,
+		}
 	}
 
 	session, _ := conn.NewSession()
@@ -86,7 +88,7 @@ func Run(options ...func(*common.Options)) bool {
 			if res.err == nil {
 				fmt.Print(res.result)
 			} else {
-				fmt.Println(res.err)
+				fmt.Println(res.result, "\n", res.err)
 				retval = false
 			}
 		case <-timeout:
