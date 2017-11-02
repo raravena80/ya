@@ -19,10 +19,6 @@ import (
 	"fmt"
 	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
-	"io/ioutil"
-	"net"
-	"os"
 	"strconv"
 	"time"
 )
@@ -30,41 +26,6 @@ import (
 type executeResult struct {
 	result string
 	err    error
-}
-
-func makeSigner(keyname string) (signer ssh.Signer, err error) {
-	fp, err := os.Open(keyname)
-	if err != nil {
-		return
-	}
-	defer fp.Close()
-
-	buf, _ := ioutil.ReadAll(fp)
-	signer, _ = ssh.ParsePrivateKey(buf)
-	return
-}
-
-func makeKeyring(key string, useAgent bool) ssh.AuthMethod {
-	signers := []ssh.Signer{}
-
-	if useAgent == true {
-		aConn, _ := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
-		sshAgent := agent.NewClient(aConn)
-		aSigners, _ := sshAgent.Signers()
-		for _, signer := range aSigners {
-			signers = append(signers, signer)
-		}
-	}
-
-	keys := []string{key}
-
-	for _, keyname := range keys {
-		signer, err := makeSigner(keyname)
-		if err == nil {
-			signers = append(signers, signer)
-		}
-	}
-	return ssh.PublicKeys(signers...)
 }
 
 func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
@@ -98,11 +59,15 @@ func Run(options ...func(*common.Options)) bool {
 	timeout := time.After(time.Duration(t) * time.Second)
 	results := make(chan executeResult, len(opt.Machines)+1)
 
+	sshAuth := []ssh.AuthMethod{
+		ssh.PublicKeys(common.MakeKeyring(
+			opt.Key,
+			opt.AgentSock,
+			opt.UseAgent)...),
+	}
 	config := &ssh.ClientConfig{
-		User: opt.User,
-		Auth: []ssh.AuthMethod{
-			makeKeyring(opt.Key, opt.UseAgent),
-		},
+		User:            opt.User,
+		Auth:            sshAuth,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 

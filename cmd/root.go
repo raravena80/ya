@@ -24,12 +24,13 @@ import (
 )
 
 var (
-	cfgFile  string
-	user     string
-	key      string
-	port     string
-	timeout  string
-	machines []string
+	cfgFile   string
+	user      string
+	key       string
+	port      string
+	timeout   string
+	agentsock string
+	machines  []string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -70,6 +71,8 @@ func init() {
 	viper.BindPFlag("ya.useagent", RootCmd.PersistentFlags().Lookup("useagent"))
 	RootCmd.PersistentFlags().StringVarP(&timeout, "timeout", "t", "5", "Timeout for connection")
 	viper.BindPFlag("ya.timeout", RootCmd.PersistentFlags().Lookup("timeout"))
+	RootCmd.PersistentFlags().StringVarP(&agentsock, "agentsock", "s", os.Getenv("SSH_AUTH_SOCK"), "SSH agent socket file. If using SSH agent")
+	viper.BindPFlag("ya.agentsock", RootCmd.PersistentFlags().Lookup("agentsock"))
 }
 
 // initConfig reads in config file and ENV variables if set.
