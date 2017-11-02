@@ -16,26 +16,15 @@ package shell
 
 import (
 	"fmt"
-	glssh "github.com/gliderlabs/ssh"
 	"github.com/raravena80/ya/common"
+	"github.com/raravena80/ya/test"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/testdata"
-	"io"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"os"
-	"reflect"
 	"testing"
 )
-
-type mockSSHKey struct {
-	keyname string
-	content []byte
-	privkey agent.AddedKey
-	pubkey  ssh.PublicKey
-}
 
 var (
 	testPrivateKeys map[string]interface{}
@@ -65,225 +54,9 @@ func init() {
 	}
 
 	randomStr := fmt.Sprintf("%v", rand.Intn(5000))
-	socketFile := "/tmp/gosocket" + randomStr + ".sock"
-	setupSshAgent(socketFile)
-	startSSHServer()
-}
-
-func setupSshAgent(socketFile string) {
-	done := make(chan string, 1)
-	a := agent.NewKeyring()
-	go func(done chan<- string) {
-		ln, err := net.Listen("unix", socketFile)
-		if err != nil {
-			panic(fmt.Sprintf("Couldn't create socket for tests %v", err))
-		}
-		// Need to wait until the socket is setup
-		firstTime := true
-		for {
-			if firstTime == true {
-				done <- socketFile
-				firstTime = false
-			}
-			c, err := ln.Accept()
-			defer c.Close()
-			if err != nil {
-				panic(fmt.Sprintf("Couldn't accept connection to agent tests %v", err))
-			}
-			go func(c io.ReadWriter) {
-				err := agent.ServeAgent(a, c)
-				if err != nil {
-					panic(fmt.Sprintf("Couldn't serve ssh agent for tests %v", err))
-				}
-
-			}(c)
-		}
-
-	}(done)
-	sshAgentSocket = <-done
-}
-
-func addKeytoSSHAgent(key agent.AddedKey) {
-	aConn, _ := net.Dial("unix", sshAgentSocket)
-	sshAgent := agent.NewClient(aConn)
-	sshAgent.Add(key)
-}
-
-func removeKeyfromSSHAgent(key ssh.PublicKey) {
-	aConn, _ := net.Dial("unix", sshAgentSocket)
-	sshAgent := agent.NewClient(aConn)
-	sshAgent.Remove(key)
-}
-
-func startSSHServer() {
-	done := make(chan bool, 1)
-	go func(done chan<- bool) {
-		glssh.Handle(func(s glssh.Session) {
-			authorizedKey := ssh.MarshalAuthorizedKey(s.PublicKey())
-			io.WriteString(s, fmt.Sprintf("public key used by %s:\n", s.User()))
-			s.Write(authorizedKey)
-		})
-
-		publicKeyOption := glssh.PublicKeyAuth(func(ctx glssh.Context, key glssh.PublicKey) bool {
-			for _, pubk := range testPublicKeys {
-				if glssh.KeysEqual(key, pubk) {
-					return true
-				}
-			}
-			return false // use glssh.KeysEqual() to compare against known keys
-		})
-
-		fmt.Println("starting ssh server on port 2222...")
-		done <- true
-		panic(glssh.ListenAndServe(":2222", nil, publicKeyOption))
-	}(done)
-	<-done
-}
-
-func TestMakeSigner(t *testing.T) {
-	tests := []struct {
-		name     string
-		key      mockSSHKey
-		expected ssh.Signer
-	}{
-		{name: "Basic key signer with valid rsa key",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
-			},
-			expected: testSigners["rsa"],
-		},
-		{name: "Basic key signer with valid dsa key",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["dsa"],
-			},
-			expected: testSigners["dsa"],
-		},
-		{name: "Basic key signer with valid ecdsa key",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["ecdsa"],
-			},
-			expected: testSigners["ecdsa"],
-		},
-		{name: "Basic key signer with valid user key",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["user"],
-			},
-			expected: testSigners["user"],
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Write content of the key to the keyname file
-			ioutil.WriteFile(tt.key.keyname, tt.key.content, 0644)
-			returned, _ := makeSigner(tt.key.keyname)
-			if !reflect.DeepEqual(returned, tt.expected) {
-				t.Errorf("Value received: %v expected %v", returned, tt.expected)
-			}
-			os.Remove(tt.key.keyname)
-		})
-	}
-}
-
-func TestMakeKeyring(t *testing.T) {
-	tests := []struct {
-		name     string
-		useagent bool
-		key      mockSSHKey
-		expected ssh.AuthMethod
-	}{
-		{name: "Basic key ring with valid rsa key",
-			useagent: false,
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["rsa"]),
-		},
-		{name: "Basic key ring with valid dsa key",
-			useagent: false,
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["dsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["dsa"]),
-		},
-		{name: "Basic key ring with valid ecdsa key",
-			useagent: false,
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["ecdsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["ecdsa"]),
-		},
-		{name: "Basic key ring with valid user key",
-			useagent: false,
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["user"],
-			},
-			expected: ssh.PublicKeys(testSigners["user"]),
-		},
-		{name: "Basic key ring agent with valid rsa key",
-			useagent: true,
-			key: mockSSHKey{
-				keyname: "",
-				content: testdata.PEMBytes["rsa"],
-				privkey: agent.AddedKey{PrivateKey: testPrivateKeys["rsa"]},
-				pubkey:  testPublicKeys["rsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["rsa"]),
-		},
-		{name: "Basic key ring agent with valid dsa key",
-			useagent: true,
-			key: mockSSHKey{
-				keyname: "",
-				content: testdata.PEMBytes["dsa"],
-				privkey: agent.AddedKey{PrivateKey: testPrivateKeys["dsa"]},
-				pubkey:  testPublicKeys["dsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["dsa"]),
-		},
-		{name: "Basic key ring agent with valid ecdsa key",
-			useagent: true,
-			key: mockSSHKey{
-				keyname: "",
-				content: testdata.PEMBytes["ecdsa"],
-				privkey: agent.AddedKey{PrivateKey: testPrivateKeys["ecdsa"]},
-				pubkey:  testPublicKeys["ecdsa"],
-			},
-			expected: ssh.PublicKeys(testSigners["ecdsa"]),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.useagent == true {
-				addKeytoSSHAgent(tt.key.privkey)
-			}
-			// Write content of the key to the keyname file
-			if tt.key.keyname != "" {
-				ioutil.WriteFile(tt.key.keyname, tt.key.content, 0644)
-			}
-			returned := makeKeyring(tt.key.keyname, tt.useagent)
-			// DeepEqual always returns false for functions unless nil
-			// hence converting to string to compare
-			check1 := reflect.ValueOf(returned).String()
-			check2 := reflect.ValueOf(tt.expected).String()
-			if !reflect.DeepEqual(check1, check2) {
-				t.Errorf("Value received: %v expected %v", returned, tt.expected)
-			}
-			if tt.useagent == true {
-				removeKeyfromSSHAgent(tt.key.pubkey)
-			}
-			if tt.key.keyname != "" {
-				os.Remove(tt.key.keyname)
-			}
-		})
-	}
+	sshAgentSocket = "/tmp/gosocket" + randomStr + ".sock"
+	test.SetupSshAgent(sshAgentSocket)
+	test.StartSSHServer(testPublicKeys)
 }
 
 func TestRun(t *testing.T) {
@@ -294,7 +67,7 @@ func TestRun(t *testing.T) {
 		user     string
 		cmd      string
 		timeout  string
-		key      mockSSHKey
+		key      test.MockSSHKey
 		useagent bool
 		expected bool
 	}{
@@ -303,9 +76,9 @@ func TestRun(t *testing.T) {
 			port:     "2222",
 			cmd:      "ls",
 			user:     "testuser",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey",
+				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
 			timeout:  "5",
@@ -316,9 +89,9 @@ func TestRun(t *testing.T) {
 			port:     "2222",
 			cmd:      "ls",
 			user:     "testuser",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey",
+				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
 			timeout:  "5",
@@ -329,9 +102,9 @@ func TestRun(t *testing.T) {
 			port:     "2223",
 			cmd:      "ls",
 			user:     "testuser",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey",
+				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
 			timeout:  "5",
@@ -342,9 +115,9 @@ func TestRun(t *testing.T) {
 			port:     "22",
 			cmd:      "ls",
 			user:     "testuser",
-			key: mockSSHKey{
-				keyname: "/tmp/mockkey",
-				content: testdata.PEMBytes["rsa"],
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey",
+				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
 			timeout:  "1",
@@ -353,30 +126,31 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// TODO: more tests with agent
 			if tt.useagent == true {
-				addKeytoSSHAgent(tt.key.privkey)
+				test.AddKeytoSSHAgent(tt.key.Privkey, sshAgentSocket)
 			}
-			// Write content of the key to the keyname file
-			if tt.key.keyname != "" {
-				ioutil.WriteFile(tt.key.keyname, tt.key.content, 0644)
+			// Write Content of the key to the Keyname file
+			if tt.key.Keyname != "" {
+				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
 			returned := Run(common.SetMachines(tt.machines),
 				common.SetUser(tt.user),
 				common.SetPort(tt.port),
 				common.SetCmd(tt.cmd),
-				common.SetKey(tt.key.keyname),
+				common.SetKey(tt.key.Keyname),
 				common.SetUseAgent(tt.useagent),
-				common.SetTimeout(tt.timeout))
+				common.SetTimeout(tt.timeout),
+				common.SetAgentSock(sshAgentSocket))
 
 			if !(returned == tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
 			}
-
 			if tt.useagent == true {
-				removeKeyfromSSHAgent(tt.key.pubkey)
+				test.RemoveKeyfromSSHAgent(tt.key.Pubkey, sshAgentSocket)
 			}
-			if tt.key.keyname != "" {
-				os.Remove(tt.key.keyname)
+			if tt.key.Keyname != "" {
+				os.Remove(tt.key.Keyname)
 			}
 		})
 	}
