@@ -181,7 +181,7 @@ func TestMakeKeyring(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.useagent == true {
-				test.AddKeytoSSHAgent(tt.key.Privkey, sshAgentSocket)
+				test.AddKeytoSshAgent(tt.key.Privkey, sshAgentSocket)
 			}
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
@@ -195,7 +195,7 @@ func TestMakeKeyring(t *testing.T) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
 			}
 			if tt.useagent == true {
-				test.RemoveKeyfromSSHAgent(tt.key.Pubkey, sshAgentSocket)
+				test.RemoveKeyfromSshAgent(tt.key.Pubkey, sshAgentSocket)
 			}
 			if tt.key.Keyname != "" {
 				os.Remove(tt.key.Keyname)
