@@ -34,12 +34,10 @@ func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	return
 }
 
-//func makeKeyring(key string, useAgent bool) ssh.AuthMethod {
 func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 	signers := []ssh.Signer{}
 
 	if useAgent == true {
-		//aConn, _ := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 		aConn, _ := net.Dial("unix", agentSock)
 		sshAgent := agent.NewClient(aConn)
 		aSigners, _ := sshAgent.Signers()
@@ -57,5 +55,4 @@ func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 		}
 	}
 	return signers
-	//return ssh.PublicKeys(signers...)
 }
