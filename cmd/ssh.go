@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"github.com/raravena80/ya/common"
-	"github.com/raravena80/ya/shell"
+	"github.com/raravena80/ya/ops"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,7 +45,7 @@ using SSH.`,
 			common.SetUseAgent(viper.GetBool("ya.useagent")))
 		options = append(options,
 			common.SetTimeout(viper.GetString("ya.timeout")))
-		shell.Run(options...)
+		ops.Run(options...)
 	},
 }
 
