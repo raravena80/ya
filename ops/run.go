@@ -30,7 +30,8 @@ type executeResult struct {
 
 func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
 
-	conn, err := ssh.Dial("tcp", hostname+":"+opt.Port, config)
+	port := fmt.Sprintf("%v", opt.Port)
+	conn, err := ssh.Dial("tcp", hostname+":"+port, config)
 
 	if err != nil {
 		return executeResult{

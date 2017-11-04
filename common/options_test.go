@@ -22,7 +22,7 @@ func TestOptions(t *testing.T) {
 	tests := []struct {
 		name      string
 		machines  []string
-		port      string
+		port      int
 		user      string
 		cmd       string
 		key       string
@@ -34,7 +34,7 @@ func TestOptions(t *testing.T) {
 	}{
 		{name: "Test all options",
 			machines:  []string{"one", "two", "three"},
-			port:      "22",
+			port:      22,
 			user:      "bogus",
 			cmd:       "runit",
 			key:       "mykey",

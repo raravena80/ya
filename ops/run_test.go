@@ -58,7 +58,7 @@ func TestRun(t *testing.T) {
 	tests := []struct {
 		name     string
 		machines []string
-		port     string
+		port     int
 		user     string
 		cmd      string
 		timeout  string
@@ -68,7 +68,7 @@ func TestRun(t *testing.T) {
 	}{
 		{name: "Basic with valid rsa key",
 			machines: []string{"localhost"},
-			port:     "2222",
+			port:     2222,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
@@ -81,7 +81,7 @@ func TestRun(t *testing.T) {
 		},
 		{name: "Basic with valid rsa key wrong hostname",
 			machines: []string{"bogushost"},
-			port:     "2222",
+			port:     2222,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
@@ -94,7 +94,7 @@ func TestRun(t *testing.T) {
 		},
 		{name: "Basic with valid rsa key wrong port",
 			machines: []string{"localhost"},
-			port:     "2223",
+			port:     2223,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
@@ -107,7 +107,7 @@ func TestRun(t *testing.T) {
 		},
 		{name: "Basic with valid rsa key Google endpoint",
 			machines: []string{"www.google.com"},
-			port:     "22",
+			port:     22,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{

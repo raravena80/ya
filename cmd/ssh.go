@@ -36,7 +36,7 @@ using SSH.`,
 		options = append(options,
 			common.SetUser(viper.GetString("ya.user")))
 		options = append(options,
-			common.SetPort(viper.GetString("ya.port")))
+			common.SetPort(viper.GetInt("ya.port")))
 		options = append(options,
 			common.SetCmd(viper.GetString("ya.command")))
 		options = append(options,
