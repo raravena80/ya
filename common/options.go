@@ -16,7 +16,7 @@ package common
 
 type Options struct {
 	Machines  []string
-	Port      string
+	Port      int
 	User      string
 	Cmd       string
 	Key       string
@@ -33,7 +33,7 @@ func SetUser(u string) func(*Options) {
 	}
 }
 
-func SetPort(p string) func(*Options) {
+func SetPort(p int) func(*Options) {
 	return func(e *Options) {
 		e.Port = p
 	}

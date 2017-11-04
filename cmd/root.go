@@ -27,7 +27,7 @@ var (
 	cfgFile   string
 	user      string
 	key       string
-	port      string
+	port      int
 	timeout   string
 	agentsock string
 	machines  []string
@@ -61,7 +61,7 @@ func init() {
 
 	RootCmd.PersistentFlags().StringSliceVarP(&machines, "machines", "m", []string{}, "Hosts to run command on")
 	viper.BindPFlag("ya.machines", RootCmd.PersistentFlags().Lookup("machines"))
-	RootCmd.PersistentFlags().StringVarP(&port, "port", "p", "22", "Ssh port to connect to")
+	RootCmd.PersistentFlags().IntVarP(&port, "port", "p", 22, "Ssh port to connect to")
 	viper.BindPFlag("ya.port", RootCmd.PersistentFlags().Lookup("port"))
 	RootCmd.PersistentFlags().StringVarP(&user, "user", "u", curUser, "User to run the command as")
 	viper.BindPFlag("ya.user", RootCmd.PersistentFlags().Lookup("user"))
