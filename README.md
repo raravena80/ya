@@ -19,7 +19,7 @@ Flags:
   -h, --help               help for ya
   -k, --key string         Ssh key to use for authentication, full path (default "/Users/raravena/.ssh/id_rsa")
   -m, --machines strings   Hosts to run command on
-  -p, --port string        Ssh port to connect to (default "22")
+  -p, --port int           Ssh port to connect to (default 22)
   -a, --useagent           Use agent for authentication
   -u, --user string        User to run the command as (default "raravena")
 
