@@ -23,12 +23,12 @@ func TestOptions(t *testing.T) {
 		name      string
 		machines  []string
 		port      int
+		timeout   int
 		user      string
 		cmd       string
 		key       string
 		src       string
 		dst       string
-		timeout   string
 		agentSock string
 		useAgent  bool
 	}{
@@ -40,7 +40,7 @@ func TestOptions(t *testing.T) {
 			key:       "mykey",
 			src:       "src",
 			dst:       "dst",
-			timeout:   "20",
+			timeout:   20,
 			agentSock: "socket",
 			useAgent:  false,
 		},
