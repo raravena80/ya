@@ -28,7 +28,7 @@ var (
 	user      string
 	key       string
 	port      int
-	timeout   string
+	timeout   int
 	agentsock string
 	machines  []string
 )
@@ -69,7 +69,7 @@ func init() {
 	viper.BindPFlag("ya.key", RootCmd.PersistentFlags().Lookup("key"))
 	RootCmd.PersistentFlags().BoolP("useagent", "a", false, "Use agent for authentication")
 	viper.BindPFlag("ya.useagent", RootCmd.PersistentFlags().Lookup("useagent"))
-	RootCmd.PersistentFlags().StringVarP(&timeout, "timeout", "t", "5", "Timeout for connection")
+	RootCmd.PersistentFlags().IntVarP(&timeout, "timeout", "t", 5, "Timeout for connection")
 	viper.BindPFlag("ya.timeout", RootCmd.PersistentFlags().Lookup("timeout"))
 	RootCmd.PersistentFlags().StringVarP(&agentsock, "agentsock", "s", os.Getenv("SSH_AUTH_SOCK"), "SSH agent socket file. If using SSH agent")
 	viper.BindPFlag("ya.agentsock", RootCmd.PersistentFlags().Lookup("agentsock"))

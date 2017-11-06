@@ -17,12 +17,12 @@ package common
 type Options struct {
 	Machines  []string
 	Port      int
+	Timeout   int
 	User      string
 	Cmd       string
 	Key       string
 	Src       string
 	Dst       string
-	Timeout   string
 	AgentSock string
 	UseAgent  bool
 }
@@ -75,7 +75,7 @@ func SetUseAgent(u bool) func(*Options) {
 	}
 }
 
-func SetTimeout(t string) func(*Options) {
+func SetTimeout(t int) func(*Options) {
 	return func(e *Options) {
 		e.Timeout = t
 	}

@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
-	"strconv"
 	"time"
 )
 
@@ -57,9 +56,8 @@ func Run(options ...func(*common.Options)) bool {
 		option(&opt)
 	}
 
-	// in t seconds the message will come to timeout channel
-	t, _ := strconv.ParseInt(opt.Timeout, 10, 64)
-	timeout := time.After(time.Duration(t) * time.Second)
+	// in opt.Timeout seconds the message will come to timeout channel
+	timeout := time.After(time.Duration(opt.Timeout) * time.Second)
 	results := make(chan executeResult, len(opt.Machines)+1)
 
 	sshAuth := []ssh.AuthMethod{

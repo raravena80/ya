@@ -59,9 +59,9 @@ func TestRun(t *testing.T) {
 		name     string
 		machines []string
 		port     int
+		timeout  int
 		user     string
 		cmd      string
-		timeout  string
 		key      test.MockSshKey
 		useagent bool
 		expected bool
@@ -76,7 +76,7 @@ func TestRun(t *testing.T) {
 				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
-			timeout:  "5",
+			timeout:  5,
 			expected: true,
 		},
 		{name: "Basic with valid rsa key wrong hostname",
@@ -89,7 +89,7 @@ func TestRun(t *testing.T) {
 				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
-			timeout:  "5",
+			timeout:  5,
 			expected: false,
 		},
 		{name: "Basic with valid rsa key wrong port",
@@ -102,7 +102,7 @@ func TestRun(t *testing.T) {
 				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
-			timeout:  "5",
+			timeout:  5,
 			expected: false,
 		},
 		{name: "Basic with valid rsa key Google endpoint",
@@ -115,7 +115,7 @@ func TestRun(t *testing.T) {
 				Content: testdata.PEMBytes["rsa"],
 			},
 			useagent: false,
-			timeout:  "1",
+			timeout:  1,
 			expected: false,
 		},
 	}
