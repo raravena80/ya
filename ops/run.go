@@ -34,7 +34,7 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 
 	if err != nil {
 		return executeResult{
-			result: "Connection refused",
+			result: "Connection error",
 			err:    err,
 		}
 	}
