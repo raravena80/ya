@@ -21,6 +21,11 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 	"io"
 	"net"
+	"os"
+	"os/exec"
+	"regexp"
+	"syscall"
+	"unsafe"
 )
 
 type MockSshKey struct {
@@ -76,6 +81,11 @@ func RemoveKeyfromSshAgent(key ssh.PublicKey, s string) {
 	sshAgent.Remove(key)
 }
 
+func setWinsize(f *os.File, w, h int) {
+	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
+		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
+}
+
 func StartSshServer(publicKeys map[string]ssh.PublicKey) {
 	done := make(chan bool, 1)
 	go func(done chan<- bool) {
@@ -83,6 +93,21 @@ func StartSshServer(publicKeys map[string]ssh.PublicKey) {
 			authorizedKey := ssh.MarshalAuthorizedKey(s.PublicKey())
 			io.WriteString(s, fmt.Sprintf("public key used by %s:\n", s.User()))
 			s.Write(authorizedKey)
+			io.WriteString(s, fmt.Sprintf("Command used %s:\n", s.Command()))
+			// Handle scp
+			rp := regexp.MustCompile("scp")
+			if rp.MatchString(s.Command()[0]) {
+				cmd := exec.Command(s.Command()[0], s.Command()[1:]...)
+				f, _ := cmd.StdinPipe()
+				err := cmd.Start()
+				if err != nil {
+					panic(err)
+				}
+				//go func() {
+				io.Copy(f, s) // stdin
+				//}()
+				//io.Copy(s, f) // stdout
+			}
 		})
 
 		publicKeyOption := glssh.PublicKeyAuth(func(ctx glssh.Context, key glssh.PublicKey) bool {

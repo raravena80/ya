@@ -24,6 +24,7 @@ type Options struct {
 	Src       string
 	Dst       string
 	AgentSock string
+	Op        string
 	UseAgent  bool
 }
 
@@ -84,5 +85,11 @@ func SetTimeout(t int) func(*Options) {
 func SetAgentSock(as string) func(*Options) {
 	return func(e *Options) {
 		e.AgentSock = as
+	}
+}
+
+func SetOp(o string) func(*Options) {
+	return func(e *Options) {
+		e.Op = o
 	}
 }

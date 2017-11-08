@@ -15,46 +15,20 @@
 package ops
 
 import (
-	"fmt"
 	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/test"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/testdata"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-var (
-	testPrivateKeys map[string]interface{}
-	testSigners     map[string]ssh.Signer
-	testPublicKeys  map[string]ssh.PublicKey
-)
-
 func init() {
-	var err error
-
-	n := len(testdata.PEMBytes)
-	testSigners = make(map[string]ssh.Signer, n)
-	testPrivateKeys = make(map[string]interface{}, n)
-	testPublicKeys = make(map[string]ssh.PublicKey, n)
-
-	for t, k := range testdata.PEMBytes {
-		testPrivateKeys[t], err = ssh.ParseRawPrivateKey(k)
-		if err != nil {
-			panic(fmt.Sprintf("Unable to parse test key %s: %v", t, err))
-		}
-		testSigners[t], err = ssh.NewSignerFromKey(testPrivateKeys[t])
-		if err != nil {
-			panic(fmt.Sprintf("Unable to create signer for test key %s: %v", t, err))
-		}
-		testPublicKeys[t] = testSigners[t].PublicKey()
-	}
-
-	test.StartSshServer(testPublicKeys)
+	// Create file to test scp locally
+	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  "), 0644)
 }
 
-func TestRun(t *testing.T) {
+func TestCopy(t *testing.T) {
 	tests := []struct {
 		name     string
 		machines []string
@@ -64,6 +38,8 @@ func TestRun(t *testing.T) {
 		cmd      string
 		key      test.MockSshKey
 		op       string
+		src      string
+		dst      string
 		useagent bool
 		expected bool
 	}{
@@ -76,9 +52,11 @@ func TestRun(t *testing.T) {
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
-			op:       "ssh",
+			op:       "scp",
 			useagent: false,
 			timeout:  5,
+			src:      "/tmp/removethis1",
+			dst:      "/tmp/removethis2",
 			expected: true,
 		},
 		{name: "Basic with valid rsa key wrong hostname",
@@ -90,9 +68,11 @@ func TestRun(t *testing.T) {
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
-			op:       "ssh",
+			op:       "scp",
 			useagent: false,
 			timeout:  5,
+			src:      "/tmp/removethis1",
+			dst:      "/tmp/removethis2",
 			expected: false,
 		},
 		{name: "Basic with valid rsa key wrong port",
@@ -104,9 +84,11 @@ func TestRun(t *testing.T) {
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
-			op:       "ssh",
+			op:       "scp",
 			useagent: false,
 			timeout:  5,
+			src:      "/tmp/removethis1",
+			dst:      "/tmp/removethis2",
 			expected: false,
 		},
 		{name: "Basic with valid rsa key Google endpoint",
@@ -118,9 +100,11 @@ func TestRun(t *testing.T) {
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
-			op:       "ssh",
+			op:       "scp",
 			useagent: false,
 			timeout:  1,
+			src:      "/tmp/removethis1",
+			dst:      "/tmp/removethis2",
 			expected: false,
 		},
 	}
@@ -137,6 +121,8 @@ func TestRun(t *testing.T) {
 				common.SetKey(tt.key.Keyname),
 				common.SetUseAgent(tt.useagent),
 				common.SetTimeout(tt.timeout),
+				common.SetSource(tt.src),
+				common.SetDestination(tt.dst),
 				common.SetOp(tt.op))
 
 			if !(returned == tt.expected) {
