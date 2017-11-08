@@ -51,16 +51,12 @@ func SshSession(options ...func(*common.Options)) bool {
 	for _, m := range opt.Machines {
 		go func(hostname string) {
 			// we’ll write results into the buffered channel of strings
-			//var r executeResult
 			switch opt.Op {
 			case "ssh":
 				results <- executeCmd(opt, hostname, config)
-				//r = executeCmd(opt, hostname, config)
 			case "scp":
 				results <- executeCopy(opt, hostname, config)
-				//executeCopy(opt, hostname, config)
 			}
-			//results <- r
 		}(m)
 	}
 

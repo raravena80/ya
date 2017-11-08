@@ -73,7 +73,8 @@ func TestOptions(t *testing.T) {
 				SetTimeout(tt.timeout),
 				SetAgentSock(tt.agentSock),
 				SetAgentSock(tt.op),
-				SetUseAgent(tt.useAgent)}
+				SetUseAgent(tt.useAgent),
+				SetOp(tt.op)}
 			opt := Options{}
 			for _, option := range options {
 				option(&opt)
