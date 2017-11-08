@@ -26,16 +26,6 @@ type executeResult struct {
 	err    error
 }
 
-func execute(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
-	switch opt.Op {
-	case "ssh":
-		return executeCmd(opt, hostname, config)
-	case "scp":
-		return executeCopy(opt, hostname, config)
-	}
-	return executeResult{"", nil}
-}
-
 func SshSession(options ...func(*common.Options)) bool {
 	opt := common.Options{}
 	for _, option := range options {
@@ -60,8 +50,17 @@ func SshSession(options ...func(*common.Options)) bool {
 
 	for _, m := range opt.Machines {
 		go func(hostname string) {
-			results <- execute(opt, hostname, config)
 			// we’ll write results into the buffered channel of strings
+			//var r executeResult
+			switch opt.Op {
+			case "ssh":
+				results <- executeCmd(opt, hostname, config)
+				//r = executeCmd(opt, hostname, config)
+			case "scp":
+				results <- executeCopy(opt, hostname, config)
+				//executeCopy(opt, hostname, config)
+			}
+			//results <- r
 		}(m)
 	}
 

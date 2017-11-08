@@ -15,15 +15,43 @@
 package ops
 
 import (
+	"fmt"
 	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/test"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/testdata"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
+var (
+	testPrivateKeys2 map[string]interface{}
+	testSigners2     map[string]ssh.Signer
+	testPublicKeys2  map[string]ssh.PublicKey
+)
+
 func init() {
+	var err error
+
+	n := len(testdata.PEMBytes)
+	testSigners2 = make(map[string]ssh.Signer, n)
+	testPrivateKeys2 = make(map[string]interface{}, n)
+	testPublicKeys2 = make(map[string]ssh.PublicKey, n)
+
+	for t, k := range testdata.PEMBytes {
+		testPrivateKeys2[t], err = ssh.ParseRawPrivateKey(k)
+		if err != nil {
+			panic(fmt.Sprintf("Unable to parse test key %s: %v", t, err))
+		}
+		testSigners2[t], err = ssh.NewSignerFromKey(testPrivateKeys2[t])
+		if err != nil {
+			panic(fmt.Sprintf("Unable to create signer for test key %s: %v", t, err))
+		}
+		testPublicKeys2[t] = testSigners2[t].PublicKey()
+	}
+
+	test.StartSshServerForScp(testPublicKeys2)
 	// Create file to test scp locally
 	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  "), 0644)
 }
@@ -43,29 +71,13 @@ func TestCopy(t *testing.T) {
 		useagent bool
 		expected bool
 	}{
-		{name: "Basic with valid rsa key",
-			machines: []string{"localhost"},
-			port:     2222,
-			cmd:      "ls",
-			user:     "testuser",
-			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
-				Content: testdata.PEMBytes["rsa"],
-			},
-			op:       "scp",
-			useagent: false,
-			timeout:  5,
-			src:      "/tmp/removethis1",
-			dst:      "/tmp/removethis2",
-			expected: true,
-		},
 		{name: "Basic with valid rsa key wrong hostname",
 			machines: []string{"bogushost"},
 			port:     2222,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey12",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "scp",
@@ -76,12 +88,12 @@ func TestCopy(t *testing.T) {
 			expected: false,
 		},
 		{name: "Basic with valid rsa key wrong port",
-			machines: []string{"localhost"},
+			machines: []string{"localhosts"},
 			port:     2223,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey13",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "scp",
@@ -97,7 +109,7 @@ func TestCopy(t *testing.T) {
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey14",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "scp",
@@ -106,6 +118,22 @@ func TestCopy(t *testing.T) {
 			src:      "/tmp/removethis1",
 			dst:      "/tmp/removethis2",
 			expected: false,
+		},
+		{name: "Basic with valid dsa key scp",
+			machines: []string{"localhost"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSshKey{
+				Keyname: "/tmp/mockkey15",
+				Content: testdata.PEMBytes["dsa"],
+			},
+			op:       "ssh",
+			useagent: false,
+			timeout:  5,
+			src:      "/tmp/removethis1",
+			dst:      "/tmp/removethis2",
+			expected: true,
 		},
 	}
 	for _, tt := range tests {
@@ -132,5 +160,24 @@ func TestCopy(t *testing.T) {
 				os.Remove(tt.key.Keyname)
 			}
 		})
+	}
+}
+
+func TestTearCopy(t *testing.T) {
+	tests := []struct {
+		name string
+		id   string
+	}{
+		{name: "Teardown Copy test",
+			id: "copyTestTdown"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.id == "copyTestTdown" {
+				os.Remove("/tmp/removethis1")
+			}
+
+		})
+
 	}
 }

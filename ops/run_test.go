@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+// +build !race
 package ops
 
 import (
@@ -51,7 +51,7 @@ func init() {
 		testPublicKeys[t] = testSigners[t].PublicKey()
 	}
 
-	test.StartSshServer(testPublicKeys)
+	test.StartSshServerForSsh(testPublicKeys)
 }
 
 func TestRun(t *testing.T) {
@@ -68,12 +68,12 @@ func TestRun(t *testing.T) {
 		expected bool
 	}{
 		{name: "Basic with valid rsa key",
-			machines: []string{"localhost"},
+			machines: []string{"127.0.0.1"},
 			port:     2222,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey1",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "ssh",
@@ -87,7 +87,7 @@ func TestRun(t *testing.T) {
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey2",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "ssh",
@@ -96,12 +96,12 @@ func TestRun(t *testing.T) {
 			expected: false,
 		},
 		{name: "Basic with valid rsa key wrong port",
-			machines: []string{"localhost"},
+			machines: []string{"127.0.0.1"},
 			port:     2223,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey3",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "ssh",
@@ -115,7 +115,7 @@ func TestRun(t *testing.T) {
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
-				Keyname: "/tmp/mockkey",
+				Keyname: "/tmp/mockkey4",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			op:       "ssh",
