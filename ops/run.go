@@ -21,11 +21,6 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-/*type executeResult struct {
-	result string
-	err    error
-}*/
-
 func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
 
 	port := fmt.Sprintf("%v", opt.Port)
