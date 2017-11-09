@@ -18,8 +18,8 @@ jobs:
             go get github.com/gliderlabs/ssh
             go get golang.org/x/tools/cmd/cover
             go get github.com/mattn/goveralls
+            go get github.com/raravena80/gotestsshd
             go get ./...
-            go install github.com/raravena80/gotestsshd
       - run:
           name: Start SSH Test Server
           command: gotestsshd &
