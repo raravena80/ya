@@ -99,7 +99,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	if err != nil {
 		fmt.Fprintln(errPipe, err.Error())
 	}
-	sendFile(opt, procWriter, errPipe)
-	return executeResult{result: hostname + ":\n" + "SCP Successful\n",
+	err = sendFile(opt, procWriter, errPipe)
+	return executeResult{result: hostname + ":\n",
 		err: err}
 }
