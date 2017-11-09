@@ -106,6 +106,22 @@ func TestCopy(t *testing.T) {
 			dst:      "/tmp/removethis2",
 			expected: true,
 		},
+		{name: "Basic with valid rsa key scp wrong file",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSshKey{
+				Keyname: "/tmp/mockkey16",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:       "scp",
+			useagent: false,
+			timeout:  5,
+			src:      "/tmp/doesntexist",
+			dst:      "/tmp/removethis2",
+			expected: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
