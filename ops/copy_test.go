@@ -120,7 +120,7 @@ func TestCopy(t *testing.T) {
 			timeout:  5,
 			src:      "/tmp/doesntexist",
 			dst:      "/tmp/removethis2",
-			expected: true,
+			expected: false,
 		},
 	}
 	for _, tt := range tests {
