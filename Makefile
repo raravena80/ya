@@ -22,7 +22,7 @@ sshserverstop:
 	echo 'Stop SSH Test Server'
 	pkill -9 gotestsshd
 
-cover/all: sshserverstart $(GOPKG_COVERS) sshserverstop
+cover/all: $(GOPKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(GOPKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
