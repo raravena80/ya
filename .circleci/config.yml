@@ -21,9 +21,6 @@ jobs:
             go get github.com/raravena80/gotestsshd
             go get ./...
       - run:
-          name: Start SSH Test Server
-          command: gotestsshd &
-      - run:
           name: Run unit tests and coverage
           command: |
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT

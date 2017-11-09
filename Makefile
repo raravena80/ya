@@ -15,6 +15,8 @@ cover/%.cover: %
 	go test -v -race -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
 cover/all: $(GOPKG_COVERS)
+	echo 'Start SSH Test Server'
+	gotestsshd &> /dev/null
 	echo mode: $(COVER_MODE) > $@
 	for f in $(GOPKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
