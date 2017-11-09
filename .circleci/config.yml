@@ -19,6 +19,10 @@ jobs:
             go get golang.org/x/tools/cmd/cover
             go get github.com/mattn/goveralls
             go get ./...
+            go install github.com/raravena80/gotestsshd
+      - run:
+          name: Start SSH Test Server
+          gotestsshd &
       - run:
           name: Run unit tests and coverage
           command: |

@@ -11,47 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package ops
 
 import (
-	"fmt"
 	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/test"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/testdata"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-var (
-	testPrivateKeys2 map[string]interface{}
-	testSigners2     map[string]ssh.Signer
-	testPublicKeys2  map[string]ssh.PublicKey
-)
-
 func init() {
-	var err error
-
-	n := len(testdata.PEMBytes)
-	testSigners2 = make(map[string]ssh.Signer, n)
-	testPrivateKeys2 = make(map[string]interface{}, n)
-	testPublicKeys2 = make(map[string]ssh.PublicKey, n)
-
-	for t, k := range testdata.PEMBytes {
-		testPrivateKeys2[t], err = ssh.ParseRawPrivateKey(k)
-		if err != nil {
-			panic(fmt.Sprintf("Unable to parse test key %s: %v", t, err))
-		}
-		testSigners2[t], err = ssh.NewSignerFromKey(testPrivateKeys2[t])
-		if err != nil {
-			panic(fmt.Sprintf("Unable to create signer for test key %s: %v", t, err))
-		}
-		testPublicKeys2[t] = testSigners2[t].PublicKey()
-	}
-
-	test.StartSshServerForScp(testPublicKeys2)
 	// Create file to test scp locally
 	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  "), 0644)
 }
@@ -73,7 +44,7 @@ func TestCopy(t *testing.T) {
 	}{
 		{name: "Basic with valid rsa key wrong hostname",
 			machines: []string{"bogushost"},
-			port:     2222,
+			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
 			key: test.MockSshKey{
@@ -128,7 +99,7 @@ func TestCopy(t *testing.T) {
 				Keyname: "/tmp/mockkey15",
 				Content: testdata.PEMBytes["rsa"],
 			},
-			op:       "ssh",
+			op:       "scp",
 			useagent: false,
 			timeout:  5,
 			src:      "/tmp/removethis1",

@@ -15,7 +15,6 @@
 package ops
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
@@ -40,6 +39,7 @@ func sendFile(opt common.Options, procWriter, errPipe io.Writer) error {
 
 	fileReader, err := os.Open(opt.Src)
 	if err != nil {
+		fmt.Fprintln(errPipe, "Could not open source file "+opt.Src, err.Error())
 		return err
 	}
 	defer fileReader.Close()
@@ -49,23 +49,25 @@ func sendFile(opt common.Options, procWriter, errPipe io.Writer) error {
 
 	_, err = procWriter.Write([]byte(header))
 	if err != nil {
+		fmt.Fprintln(errPipe, "Could not write scp header", err.Error())
 		return err
 	}
 
 	_, err = io.Copy(procWriter, fileReader)
 	if err != nil {
+		fmt.Fprintln(errPipe, "Could not send file", err.Error())
 		return err
 	}
 	// terminate with null byte
 	err = sendByte(procWriter, 0)
 	if err != nil {
+		fmt.Fprintln(errPipe, "Could not send last byte", err.Error())
 		return err
 	}
 
 	err = fileReader.Close()
-
 	if err != nil {
-		fmt.Fprintln(errPipe, err.Error())
+		fmt.Fprintln(errPipe, "Could not close source file "+opt.Src, err.Error())
 	}
 	return err
 }
@@ -84,8 +86,6 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	session, _ := conn.NewSession()
 	defer session.Close()
 
-	var stdoutBuf bytes.Buffer
-	session.Stdout = &stdoutBuf
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
 
@@ -100,7 +100,6 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		fmt.Fprintln(errPipe, err.Error())
 	}
 	sendFile(opt, procWriter, errPipe)
-
-	return executeResult{result: hostname + ":\n" + stdoutBuf.String(),
+	return executeResult{result: hostname + ":\n" + "SCP Successful\n",
 		err: err}
 }
