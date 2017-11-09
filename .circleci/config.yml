@@ -22,7 +22,7 @@ jobs:
             go install github.com/raravena80/gotestsshd
       - run:
           name: Start SSH Test Server
-          gotestsshd &
+          command: gotestsshd &
       - run:
           name: Run unit tests and coverage
           command: |
