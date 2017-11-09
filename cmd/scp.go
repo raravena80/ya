@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/raravena80/ya/common"
+	"github.com/raravena80/ya/ops"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,14 +35,33 @@ You can specify the source and destination files,
 the source files are local and the destination files
 are in the remote servers.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("scp not implemented yet")
+		var options []func(*common.Options)
+		options = append(options,
+			common.SetMachines(viper.GetStringSlice("ya.machines")))
+		options = append(options,
+			common.SetUser(viper.GetString("ya.user")))
+		options = append(options,
+			common.SetPort(viper.GetInt("ya.port")))
+		options = append(options,
+			common.SetKey(viper.GetString("ya.key")))
+		options = append(options,
+			common.SetUseAgent(viper.GetBool("ya.useagent")))
+		options = append(options,
+			common.SetTimeout(viper.GetInt("ya.timeout")))
+		options = append(options,
+			common.SetSource(viper.GetString("ya.source")))
+		options = append(options,
+			common.SetDestination(viper.GetString("ya.destination")))
+		options = append(options,
+			common.SetOp("scp"))
+		ops.SshSession(options...)
 	},
 }
 
 func init() {
 	// Add scpCmd to cobra
 	RootCmd.AddCommand(scpCmd)
-	scpCmd.Flags().StringVarP(&src, "src", "s", "", "Source file or directory")
+	scpCmd.Flags().StringVarP(&src, "src", "f", "", "Source file or directory")
 	viper.BindPFlag("ya.scp.src", sshCmd.Flags().Lookup("source"))
 	scpCmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination file or directory")
 	viper.BindPFlag("ya.scp.dst", sshCmd.Flags().Lookup("destination"))

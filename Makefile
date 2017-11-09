@@ -14,7 +14,15 @@ cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -v -race -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
-cover/all: $(GOPKG_COVERS)
+sshserverstart:
+	echo 'Start SSH Test Server'
+	gotestsshd & > /dev/null 2>&1
+
+sshserverstop:
+	echo 'Stop SSH Test Server'
+	pkill -9 gotestsshd
+
+cover/all: sshserverstart $(GOPKG_COVERS) sshserverstop
 	echo mode: $(COVER_MODE) > $@
 	for f in $(GOPKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 

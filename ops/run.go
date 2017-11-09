@@ -19,13 +19,7 @@ import (
 	"fmt"
 	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
-	"time"
 )
-
-type executeResult struct {
-	result string
-	err    error
-}
 
 func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
 
@@ -48,52 +42,4 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 
 	return executeResult{result: hostname + ":\n" + stdoutBuf.String(),
 		err: err}
-}
-
-func Run(options ...func(*common.Options)) bool {
-	opt := common.Options{}
-	for _, option := range options {
-		option(&opt)
-	}
-
-	// in opt.Timeout seconds the message will come to timeout channel
-	timeout := time.After(time.Duration(opt.Timeout) * time.Second)
-	results := make(chan executeResult, len(opt.Machines)+1)
-
-	sshAuth := []ssh.AuthMethod{
-		ssh.PublicKeys(common.MakeKeyring(
-			opt.Key,
-			opt.AgentSock,
-			opt.UseAgent)...),
-	}
-	config := &ssh.ClientConfig{
-		User:            opt.User,
-		Auth:            sshAuth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-
-	for _, m := range opt.Machines {
-		go func(hostname string) {
-			results <- executeCmd(opt, hostname, config)
-			// we’ll write results into the buffered channel of strings
-		}(m)
-	}
-
-	retval := true
-
-	for i := 0; i < len(opt.Machines); i++ {
-		select {
-		case res := <-results:
-			if res.err == nil {
-				fmt.Print(res.result)
-			} else {
-				fmt.Println(res.result, "\n", res.err)
-				retval = false
-			}
-		case <-timeout:
-			fmt.Println("Timed out!")
-			retval = false
-		}
-	}
-	return retval
 }

@@ -45,7 +45,9 @@ using SSH.`,
 			common.SetUseAgent(viper.GetBool("ya.useagent")))
 		options = append(options,
 			common.SetTimeout(viper.GetInt("ya.timeout")))
-		ops.Run(options...)
+		options = append(options,
+			common.SetOp("ssh"))
+		ops.SshSession(options...)
 	},
 }
 

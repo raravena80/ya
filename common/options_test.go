@@ -30,9 +30,10 @@ func TestOptions(t *testing.T) {
 		src       string
 		dst       string
 		agentSock string
+		op        string
 		useAgent  bool
 	}{
-		{name: "Test all options",
+		{name: "Test all options ssh",
 			machines:  []string{"one", "two", "three"},
 			port:      22,
 			user:      "bogus",
@@ -42,6 +43,20 @@ func TestOptions(t *testing.T) {
 			dst:       "dst",
 			timeout:   20,
 			agentSock: "socket",
+			op:        "run",
+			useAgent:  false,
+		},
+		{name: "Test all options scp",
+			machines:  []string{"one", "two", "three"},
+			port:      22,
+			user:      "bogus",
+			cmd:       "runit",
+			key:       "mykey",
+			src:       "src",
+			dst:       "dst",
+			timeout:   20,
+			agentSock: "socket",
+			op:        "copy",
 			useAgent:  false,
 		},
 	}
@@ -57,7 +72,9 @@ func TestOptions(t *testing.T) {
 				SetDestination(tt.dst),
 				SetTimeout(tt.timeout),
 				SetAgentSock(tt.agentSock),
-				SetUseAgent(tt.useAgent)}
+				SetAgentSock(tt.op),
+				SetUseAgent(tt.useAgent),
+				SetOp(tt.op)}
 			opt := Options{}
 			for _, option := range options {
 				option(&opt)
