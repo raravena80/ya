@@ -20,7 +20,7 @@ sshserverstart:
 
 sshserverstop:
 	echo 'Stop SSH Test Server'
-	pkill -9 gosshtestd
+	pkill -9 gotestsshd
 
 cover/all: sshserverstart $(GOPKG_COVERS) sshserverstop
 	echo mode: $(COVER_MODE) > $@
