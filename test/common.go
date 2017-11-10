@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package test
 
 import (
@@ -27,14 +28,16 @@ import (
 	"unsafe"
 )
 
-type MockSshKey struct {
+// MockSSHKey Mock SSH key for tests
+type MockSSHKey struct {
 	Keyname string
 	Content []byte
 	Privkey agent.AddedKey
 	Pubkey  ssh.PublicKey
 }
 
-func SetupSshAgent(socketFile string) {
+// SetupSSHAgent Setup and SSH agent for tests
+func SetupSSHAgent(socketFile string) {
 	done := make(chan string, 1)
 	a := agent.NewKeyring()
 	ln, err := net.Listen("unix", socketFile)
@@ -68,13 +71,15 @@ func SetupSshAgent(socketFile string) {
 	<-done
 }
 
-func AddKeytoSshAgent(key agent.AddedKey, s string) {
+// AddKeytoSSHAgent Adds a private key to the ssh agent
+func AddKeytoSSHAgent(key agent.AddedKey, s string) {
 	aConn, _ := net.Dial("unix", s)
 	sshAgent := agent.NewClient(aConn)
 	sshAgent.Add(key)
 }
 
-func RemoveKeyfromSshAgent(key ssh.PublicKey, s string) {
+// RemoveKeyfromSSHAgent Removes a key from the ssh agent
+func RemoveKeyfromSSHAgent(key ssh.PublicKey, s string) {
 	aConn, _ := net.Dial("unix", s)
 	sshAgent := agent.NewClient(aConn)
 	sshAgent.Remove(key)
@@ -85,7 +90,8 @@ func setWinsize(f *os.File, w, h int) {
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
 
-func StartSshServerForSsh(publicKeys map[string]ssh.PublicKey) {
+// StartSSHServerForSSH Starts SSH server for ssh tests
+func StartSSHServerForSSH(publicKeys map[string]ssh.PublicKey) {
 	done := make(chan bool, 1)
 	go func(done chan<- bool) {
 		sshHandler := func(s glssh.Session) {
@@ -111,7 +117,8 @@ func StartSshServerForSsh(publicKeys map[string]ssh.PublicKey) {
 	<-done
 }
 
-func StartSshServerForScp(publicKeys map[string]ssh.PublicKey) {
+// StartSSHServerForScp Starts SSH server for scp tests
+func StartSSHServerForScp(publicKeys map[string]ssh.PublicKey) {
 	done := make(chan bool, 1)
 	go func(done chan<- bool) {
 		scpHandler := func(s glssh.Session) {

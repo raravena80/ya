@@ -56,38 +56,38 @@ func init() {
 
 	randomStr := fmt.Sprintf("%v", rand.Intn(5000))
 	sshAgentSocket = "/tmp/gosocket" + randomStr + ".sock"
-	test.SetupSshAgent(sshAgentSocket)
+	test.SetupSSHAgent(sshAgentSocket)
 }
 
 func TestMakeSigner(t *testing.T) {
 	tests := []struct {
 		name     string
-		key      test.MockSshKey
+		key      test.MockSSHKey
 		expected ssh.Signer
 	}{
 		{name: "Basic key signer with valid rsa key",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
 			expected: testSigners["rsa"],
 		},
 		{name: "Basic key signer with valid dsa key",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["dsa"],
 			},
 			expected: testSigners["dsa"],
 		},
 		{name: "Basic key signer with valid ecdsa key",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["ecdsa"],
 			},
 			expected: testSigners["ecdsa"],
 		},
 		{name: "Basic key signer with valid user key",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["user"],
 			},
@@ -112,12 +112,12 @@ func TestMakeKeyring(t *testing.T) {
 	tests := []struct {
 		name     string
 		useagent bool
-		key      test.MockSshKey
+		key      test.MockSSHKey
 		expected []byte
 	}{
 		{name: "Basic key ring with valid rsa key",
 			useagent: false,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -125,7 +125,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring with valid dsa key",
 			useagent: false,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["dsa"],
 			},
@@ -133,7 +133,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring with valid ecdsa key",
 			useagent: false,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["ecdsa"],
 			},
@@ -141,7 +141,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring with valid user key",
 			useagent: false,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey",
 				Content: testdata.PEMBytes["user"],
 			},
@@ -149,7 +149,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring agent with valid rsa key",
 			useagent: true,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "",
 				Content: testdata.PEMBytes["rsa"],
 				Privkey: agent.AddedKey{PrivateKey: testPrivateKeys["rsa"]},
@@ -159,7 +159,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring agent with valid dsa key",
 			useagent: true,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "",
 				Content: testdata.PEMBytes["dsa"],
 				Privkey: agent.AddedKey{PrivateKey: testPrivateKeys["dsa"]},
@@ -169,7 +169,7 @@ func TestMakeKeyring(t *testing.T) {
 		},
 		{name: "Basic key ring agent with valid ecdsa key",
 			useagent: true,
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "",
 				Content: testdata.PEMBytes["ecdsa"],
 				Privkey: agent.AddedKey{PrivateKey: testPrivateKeys["ecdsa"]},
@@ -181,7 +181,7 @@ func TestMakeKeyring(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.useagent == true {
-				test.AddKeytoSshAgent(tt.key.Privkey, sshAgentSocket)
+				test.AddKeytoSSHAgent(tt.key.Privkey, sshAgentSocket)
 			}
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
@@ -195,7 +195,7 @@ func TestMakeKeyring(t *testing.T) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
 			}
 			if tt.useagent == true {
-				test.RemoveKeyfromSshAgent(tt.key.Pubkey, sshAgentSocket)
+				test.RemoveKeyfromSSHAgent(tt.key.Pubkey, sshAgentSocket)
 			}
 			if tt.key.Keyname != "" {
 				os.Remove(tt.key.Keyname)
