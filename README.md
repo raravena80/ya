@@ -1,4 +1,4 @@
-# [![CircleCI Build Status](https://circleci.com/gh/raravena80/ya.svg?style=shield)](https://circleci.com/gh/raravena80/ya) [![Coverage Status](https://coveralls.io/repos/github/raravena80/ya/badge.svg?branch=master)](https://coveralls.io/github/raravena80/ya?branch=master) [![Apache Licensed](https://img.shields.io/badge/license-Apache2.0-blue.svg)](https://raw.githubusercontent.com/raravena80/ya/master/LICENSE)
+# [![CircleCI Build Status](https://circleci.com/gh/raravena80/ya.svg?style=shield)](https://circleci.com/gh/raravena80/ya) [![Coverage Status](https://coveralls.io/repos/github/raravena80/ya/badge.svg?branch=master)](https://coveralls.io/github/raravena80/ya?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/raravena80/ya)](https://goreportcard.com/report/github.com/raravena80/ya) [![Apache Licensed](https://img.shields.io/badge/license-Apache2.0-blue.svg)](https://raw.githubusercontent.com/raravena80/ya/master/LICENSE)
 
 ![ya](https://user-images.githubusercontent.com/7659560/32466351-7f0fec64-c2fb-11e7-8299-1aad4fbdd28e.png)
 
