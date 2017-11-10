@@ -23,8 +23,9 @@ import (
 )
 
 func init() {
-	// Create file to test scp locally
-	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  "), 0644)
+	// Create files to test scp locally
+	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  uu"), 0644)
+	ioutil.WriteFile("/tmp/removethisnoperm", []byte("Sample file 2 uu"), 0000)
 }
 
 func TestCopy(t *testing.T) {
@@ -122,6 +123,22 @@ func TestCopy(t *testing.T) {
 			dst:      "/tmp/removethis2",
 			expected: false,
 		},
+		{name: "Basic with valid rsa key scp file with no permissions",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSshKey{
+				Keyname: "/tmp/mockkey16",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:       "scp",
+			useagent: false,
+			timeout:  5,
+			src:      "/tmp/removethisnoperm",
+			dst:      "/tmp/removethis2",
+			expected: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -162,6 +179,7 @@ func TestTearCopy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.id == "copyTestTdown" {
 				os.Remove("/tmp/removethis1")
+				os.Remove("/tmp/removethisnoperm")
 			}
 
 		})
