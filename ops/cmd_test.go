@@ -59,7 +59,7 @@ func TestRun(t *testing.T) {
 		timeout  int
 		user     string
 		cmd      string
-		key      test.MockSshKey
+		key      test.MockSSHKey
 		op       string
 		useagent bool
 		expected bool
@@ -69,7 +69,7 @@ func TestRun(t *testing.T) {
 			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey1",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -83,7 +83,7 @@ func TestRun(t *testing.T) {
 			port:     2222,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey2",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -97,7 +97,7 @@ func TestRun(t *testing.T) {
 			port:     2223,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey3",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -111,7 +111,7 @@ func TestRun(t *testing.T) {
 			port:     22,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey4",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -127,7 +127,7 @@ func TestRun(t *testing.T) {
 			if tt.key.Keyname != "" {
 				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
-			returned := SshSession(common.SetMachines(tt.machines),
+			returned := SSHSession(common.SetMachines(tt.machines),
 				common.SetUser(tt.user),
 				common.SetPort(tt.port),
 				common.SetCmd(tt.cmd),

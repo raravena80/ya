@@ -36,7 +36,7 @@ func TestCopy(t *testing.T) {
 		timeout  int
 		user     string
 		cmd      string
-		key      test.MockSshKey
+		key      test.MockSSHKey
 		op       string
 		src      string
 		dst      string
@@ -48,7 +48,7 @@ func TestCopy(t *testing.T) {
 			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey12",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -64,7 +64,7 @@ func TestCopy(t *testing.T) {
 			port:     2223,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey13",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -80,7 +80,7 @@ func TestCopy(t *testing.T) {
 			port:     22,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey14",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -96,7 +96,7 @@ func TestCopy(t *testing.T) {
 			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey15",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -112,7 +112,7 @@ func TestCopy(t *testing.T) {
 			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey16",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -128,7 +128,7 @@ func TestCopy(t *testing.T) {
 			port:     2224,
 			cmd:      "ls",
 			user:     "testuser",
-			key: test.MockSshKey{
+			key: test.MockSSHKey{
 				Keyname: "/tmp/mockkey16",
 				Content: testdata.PEMBytes["rsa"],
 			},
@@ -146,7 +146,7 @@ func TestCopy(t *testing.T) {
 			if tt.key.Keyname != "" {
 				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
-			returned := SshSession(common.SetMachines(tt.machines),
+			returned := SSHSession(common.SetMachines(tt.machines),
 				common.SetUser(tt.user),
 				common.SetPort(tt.port),
 				common.SetCmd(tt.cmd),

@@ -54,7 +54,7 @@ are in the remote servers.`,
 			common.SetDestination(viper.GetString("ya.destination")))
 		options = append(options,
 			common.SetOp("scp"))
-		ops.SshSession(options...)
+		ops.SSHSession(options...)
 	},
 }
 

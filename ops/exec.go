@@ -26,7 +26,8 @@ type executeResult struct {
 	err    error
 }
 
-func SshSession(options ...func(*common.Options)) bool {
+// SSHSession Create an SSH Session
+func SSHSession(options ...func(*common.Options)) bool {
 	opt := common.Options{}
 	for _, option := range options {
 		option(&opt)

@@ -34,6 +34,7 @@ func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	return
 }
 
+// MakeKeyring Makes an ssh key ring for authentication
 func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 	signers := []ssh.Signer{}
 
