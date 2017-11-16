@@ -147,23 +147,15 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	if opt.IsRecursive {
 		if srcFileInfo.IsDir() {
 			err = processDir(opt.Src, srcFileInfo, procWriter, errPipe)
-			if err != nil {
-				fmt.Fprintln(errPipe, err.Error())
-			}
 		} else {
 			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe)
-			if err != nil {
-				fmt.Fprintln(errPipe, err.Error())
-			}
 		}
 	} else {
 		if srcFileInfo.IsDir() {
-			fmt.Fprintln(errPipe, "Error: Not a regular file:", opt.Src)
+			fmt.Fprintln(errPipe, "Not a regular file:", opt.Src, "specify recursive")
+			err = fmt.Errorf("Not a regular file %v", opt.Src)
 		} else {
 			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe)
-			if err != nil {
-				fmt.Fprintln(errPipe, srcFileInfo, err.Error())
-			}
 		}
 	}
 
