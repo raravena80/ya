@@ -73,6 +73,9 @@ func init() {
 	viper.BindPFlag("ya.timeout", RootCmd.PersistentFlags().Lookup("timeout"))
 	RootCmd.PersistentFlags().StringVarP(&agentsock, "agentsock", "s", os.Getenv("SSH_AUTH_SOCK"), "SSH agent socket file. If using SSH agent")
 	viper.BindPFlag("ya.agentsock", RootCmd.PersistentFlags().Lookup("agentsock"))
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Set verbose output")
+	viper.BindPFlag("ya.verbose", RootCmd.PersistentFlags().Lookup("verbose"))
+
 }
 
 // initConfig reads in config file and ENV variables if set.
