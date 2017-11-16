@@ -49,9 +49,9 @@ are in the remote servers.`,
 		options = append(options,
 			common.SetTimeout(viper.GetInt("ya.timeout")))
 		options = append(options,
-			common.SetSource(viper.GetString("ya.source")))
+			common.SetSource(viper.GetString("ya.scp.source")))
 		options = append(options,
-			common.SetDestination(viper.GetString("ya.destination")))
+			common.SetDestination(viper.GetString("ya.scp.destination")))
 		options = append(options,
 			common.SetOp("scp"))
 		ops.SSHSession(options...)

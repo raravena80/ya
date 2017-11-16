@@ -38,13 +38,13 @@ using SSH.`,
 		options = append(options,
 			common.SetPort(viper.GetInt("ya.port")))
 		options = append(options,
-			common.SetCmd(viper.GetString("ya.command")))
-		options = append(options,
 			common.SetKey(viper.GetString("ya.key")))
 		options = append(options,
 			common.SetUseAgent(viper.GetBool("ya.useagent")))
 		options = append(options,
 			common.SetTimeout(viper.GetInt("ya.timeout")))
+		options = append(options,
+			common.SetCmd(viper.GetString("ya.ssh.command")))
 		options = append(options,
 			common.SetOp("ssh"))
 		ops.SSHSession(options...)
