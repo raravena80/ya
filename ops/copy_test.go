@@ -27,7 +27,9 @@ func init() {
 	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  uu"), 0644)
 	ioutil.WriteFile("/tmp/removethisnoperm", []byte("Sample file 2 uu"), 0000)
 	os.Mkdir("/tmp/removethisdir", 0777)
+	os.Mkdir("/tmp/removethisdir/removethisotherdir", 0777)
 	ioutil.WriteFile("/tmp/removethisdir/removefile", []byte("Sample file in dir"), 0644)
+	ioutil.WriteFile("/tmp/removethisdir/removethisotherdir/file1", []byte("another_file"), 0644)
 }
 
 func TestCopy(t *testing.T) {
@@ -221,6 +223,8 @@ func TestTearCopy(t *testing.T) {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
 				os.Remove("/tmp/removethisdir/removefile")
+				os.Remove("/tmp/removethisdir/removethisotherdir/file1")
+				os.Remove("/tmp/removethisdir/removethisotherdir")
 				os.Remove("/tmp/removethisdir")
 			}
 

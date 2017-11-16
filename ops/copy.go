@@ -100,12 +100,6 @@ func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Wr
 	err = sendByte(procWriter, 0)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not send last byte", err.Error())
-		return err
-	}
-
-	err = fileReader.Close()
-	if err != nil {
-		fmt.Fprintln(errPipe, "Could not close source file "+srcFile, err.Error())
 	}
 	return err
 }
