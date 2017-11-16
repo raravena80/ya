@@ -116,7 +116,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 	session, _ := conn.NewSession()
-	defer session.Close()
+	//defer session.Close()
 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
@@ -153,6 +153,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
+	session.Close()
 	return executeResult{result: hostname + ":\n",
 		err: err}
 }
