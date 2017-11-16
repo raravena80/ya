@@ -141,6 +141,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	srcFileInfo, err := os.Stat(opt.Src)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not stat source file "+opt.Src)
+		return executeResult{result: hostname + ":\n", err: err}
 	}
 
 	if opt.IsRecursive {
