@@ -53,6 +53,8 @@ are in the remote servers.`,
 		options = append(options,
 			common.SetDestination(viper.GetString("ya.scp.destination")))
 		options = append(options,
+			common.SetIsRecursive(viper.GetBool("ya.scp.recursive")))
+		options = append(options,
 			common.SetOp("scp"))
 		ops.SSHSession(options...)
 	},
@@ -65,4 +67,6 @@ func init() {
 	viper.BindPFlag("ya.scp.src", sshCmd.Flags().Lookup("source"))
 	scpCmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination file or directory")
 	viper.BindPFlag("ya.scp.dst", sshCmd.Flags().Lookup("destination"))
+	scpCmd.Flags().BoolP("recursive", "r", false, "Set recursive copy")
+	viper.BindPFlag("ya.scp.recursive", scpCmd.Flags().Lookup("recursive"))
 }

@@ -26,22 +26,28 @@ func init() {
 	// Create files to test scp locally
 	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  uu"), 0644)
 	ioutil.WriteFile("/tmp/removethisnoperm", []byte("Sample file 2 uu"), 0000)
+	os.Mkdir("/tmp/removethisdir", 0777)
+	os.Mkdir("/tmp/removethisdir/removethisotherdir", 0777)
+	ioutil.WriteFile("/tmp/removethisdir/removefile", []byte("Sample file in dir"), 0644)
+	ioutil.WriteFile("/tmp/removethisdir/removethisotherdir/file1", []byte("another_file"), 0644)
 }
 
 func TestCopy(t *testing.T) {
 	tests := []struct {
-		name     string
-		machines []string
-		port     int
-		timeout  int
-		user     string
-		cmd      string
-		key      test.MockSSHKey
-		op       string
-		src      string
-		dst      string
-		useagent bool
-		expected bool
+		name        string
+		machines    []string
+		port        int
+		timeout     int
+		user        string
+		cmd         string
+		key         test.MockSSHKey
+		op          string
+		src         string
+		dst         string
+		useagent    bool
+		isrecursive bool
+		verbose     bool
+		expected    bool
 	}{
 		{name: "Basic with valid rsa key wrong hostname",
 			machines: []string{"bogushost"},
@@ -139,6 +145,40 @@ func TestCopy(t *testing.T) {
 			dst:      "/tmp/removethis2",
 			expected: false,
 		},
+		{name: "Basic with valid rsa key scp dir recursive",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey17",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:          "scp",
+			useagent:    false,
+			timeout:     5,
+			src:         "/tmp/removethisdir",
+			dst:         "/tmp/removethisdir",
+			expected:    true,
+			isrecursive: true,
+		},
+		{name: "Basic with valid rsa key scp dir non recursive",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey18",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:          "scp",
+			useagent:    false,
+			timeout:     5,
+			src:         "/tmp/removethisdir",
+			dst:         "/tmp/removethisdir2",
+			expected:    false,
+			isrecursive: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -155,7 +195,9 @@ func TestCopy(t *testing.T) {
 				common.SetTimeout(tt.timeout),
 				common.SetSource(tt.src),
 				common.SetDestination(tt.dst),
-				common.SetOp(tt.op))
+				common.SetOp(tt.op),
+				common.SetIsRecursive(tt.isrecursive),
+				common.SetVerbose(tt.verbose))
 
 			if !(returned == tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
@@ -180,6 +222,10 @@ func TestTearCopy(t *testing.T) {
 			if tt.id == "copyTestTdown" {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
+				os.Remove("/tmp/removethisdir/removefile")
+				os.Remove("/tmp/removethisdir/removethisotherdir/file1")
+				os.Remove("/tmp/removethisdir/removethisotherdir")
+				os.Remove("/tmp/removethisdir")
 			}
 
 		})

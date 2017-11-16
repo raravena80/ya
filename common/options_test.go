@@ -32,6 +32,8 @@ func TestOptions(t *testing.T) {
 		agentSock string
 		op        string
 		useAgent  bool
+		recursive bool
+		verbose   bool
 	}{
 		{name: "Test all options ssh",
 			machines:  []string{"one", "two", "three"},
@@ -45,6 +47,8 @@ func TestOptions(t *testing.T) {
 			agentSock: "socket",
 			op:        "run",
 			useAgent:  false,
+			recursive: true,
+			verbose:   false,
 		},
 		{name: "Test all options scp",
 			machines:  []string{"one", "two", "three"},
@@ -58,6 +62,8 @@ func TestOptions(t *testing.T) {
 			agentSock: "socket",
 			op:        "copy",
 			useAgent:  false,
+			recursive: false,
+			verbose:   true,
 		},
 	}
 
@@ -74,6 +80,8 @@ func TestOptions(t *testing.T) {
 				SetAgentSock(tt.agentSock),
 				SetAgentSock(tt.op),
 				SetUseAgent(tt.useAgent),
+				SetIsRecursive(tt.recursive),
+				SetVerbose(tt.verbose),
 				SetOp(tt.op)}
 			opt := Options{}
 			for _, option := range options {

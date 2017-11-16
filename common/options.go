@@ -16,17 +16,19 @@ package common
 
 // Options Main options struct
 type Options struct {
-	Machines  []string
-	Port      int
-	Timeout   int
-	User      string
-	Cmd       string
-	Key       string
-	Src       string
-	Dst       string
-	AgentSock string
-	Op        string
-	UseAgent  bool
+	Machines    []string
+	Port        int
+	Timeout     int
+	User        string
+	Cmd         string
+	Key         string
+	Src         string
+	Dst         string
+	AgentSock   string
+	Op          string
+	UseAgent    bool
+	IsRecursive bool
+	IsVerbose   bool
 }
 
 // SetUser Sets user for ssh session
@@ -104,5 +106,19 @@ func SetAgentSock(as string) func(*Options) {
 func SetOp(o string) func(*Options) {
 	return func(e *Options) {
 		e.Op = o
+	}
+}
+
+// SetIsRecursive Sets whether we want to a recursive scp
+func SetIsRecursive(r bool) func(*Options) {
+	return func(e *Options) {
+		e.IsRecursive = r
+	}
+}
+
+// SetVerbose Sets high verbosity
+func SetVerbose(v bool) func(*Options) {
+	return func(e *Options) {
+		e.IsVerbose = v
 	}
 }
