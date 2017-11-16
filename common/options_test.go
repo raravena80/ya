@@ -20,50 +20,50 @@ import (
 
 func TestOptions(t *testing.T) {
 	tests := []struct {
-		name        string
-		machines    []string
-		port        int
-		timeout     int
-		user        string
-		cmd         string
-		key         string
-		src         string
-		dst         string
-		agentSock   string
-		op          string
-		useAgent    bool
-		isRecursive bool
-		isVerbose   bool
+		name      string
+		machines  []string
+		port      int
+		timeout   int
+		user      string
+		cmd       string
+		key       string
+		src       string
+		dst       string
+		agentSock string
+		op        string
+		useAgent  bool
+		recursive bool
+		verbose   bool
 	}{
 		{name: "Test all options ssh",
-			machines:    []string{"one", "two", "three"},
-			port:        22,
-			user:        "bogus",
-			cmd:         "runit",
-			key:         "mykey",
-			src:         "src",
-			dst:         "dst",
-			timeout:     20,
-			agentSock:   "socket",
-			op:          "run",
-			useAgent:    false,
-			isRecursive: true,
-			isVerbose:   false,
+			machines:  []string{"one", "two", "three"},
+			port:      22,
+			user:      "bogus",
+			cmd:       "runit",
+			key:       "mykey",
+			src:       "src",
+			dst:       "dst",
+			timeout:   20,
+			agentSock: "socket",
+			op:        "run",
+			useAgent:  false,
+			recursive: true,
+			verbose:   false,
 		},
 		{name: "Test all options scp",
-			machines:    []string{"one", "two", "three"},
-			port:        22,
-			user:        "bogus",
-			cmd:         "runit",
-			key:         "mykey",
-			src:         "src",
-			dst:         "dst",
-			timeout:     20,
-			agentSock:   "socket",
-			op:          "copy",
-			useAgent:    false,
-			isRecursive: false,
-			isVerbose:   true,
+			machines:  []string{"one", "two", "three"},
+			port:      22,
+			user:      "bogus",
+			cmd:       "runit",
+			key:       "mykey",
+			src:       "src",
+			dst:       "dst",
+			timeout:   20,
+			agentSock: "socket",
+			op:        "copy",
+			useAgent:  false,
+			recursive: false,
+			verbose:   true,
 		},
 	}
 
@@ -80,6 +80,8 @@ func TestOptions(t *testing.T) {
 				SetAgentSock(tt.agentSock),
 				SetAgentSock(tt.op),
 				SetUseAgent(tt.useAgent),
+				SetIsRecursive(tt.recursive),
+				SetVerbose(tt.verbose),
 				SetOp(tt.op)}
 			opt := Options{}
 			for _, option := range options {
