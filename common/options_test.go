@@ -20,44 +20,50 @@ import (
 
 func TestOptions(t *testing.T) {
 	tests := []struct {
-		name      string
-		machines  []string
-		port      int
-		timeout   int
-		user      string
-		cmd       string
-		key       string
-		src       string
-		dst       string
-		agentSock string
-		op        string
-		useAgent  bool
+		name        string
+		machines    []string
+		port        int
+		timeout     int
+		user        string
+		cmd         string
+		key         string
+		src         string
+		dst         string
+		agentSock   string
+		op          string
+		useAgent    bool
+		isRecursive bool
+		isVerbose   bool
 	}{
 		{name: "Test all options ssh",
-			machines:  []string{"one", "two", "three"},
-			port:      22,
-			user:      "bogus",
-			cmd:       "runit",
-			key:       "mykey",
-			src:       "src",
-			dst:       "dst",
-			timeout:   20,
-			agentSock: "socket",
-			op:        "run",
-			useAgent:  false,
+			machines:    []string{"one", "two", "three"},
+			port:        22,
+			user:        "bogus",
+			cmd:         "runit",
+			key:         "mykey",
+			src:         "src",
+			dst:         "dst",
+			timeout:     20,
+			agentSock:   "socket",
+			op:          "run",
+			useAgent:    false,
+			isRecursive: true,
+			isVerbose:   false,
 		},
 		{name: "Test all options scp",
-			machines:  []string{"one", "two", "three"},
-			port:      22,
-			user:      "bogus",
-			cmd:       "runit",
-			key:       "mykey",
-			src:       "src",
-			dst:       "dst",
-			timeout:   20,
-			agentSock: "socket",
-			op:        "copy",
-			useAgent:  false,
+			machines:    []string{"one", "two", "three"},
+			port:        22,
+			user:        "bogus",
+			cmd:         "runit",
+			key:         "mykey",
+			src:         "src",
+			dst:         "dst",
+			timeout:     20,
+			agentSock:   "socket",
+			op:          "copy",
+			useAgent:    false,
+			isRecursive: false,
+			isVerbose:   true,
 		},
 	}
 
