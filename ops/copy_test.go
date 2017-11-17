@@ -222,9 +222,9 @@ func TestTearCopy(t *testing.T) {
 			if tt.id == "copyTestTdown" {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
-				os.Remove("/tmp/removethisdir/removefile")
 				os.Remove("/tmp/removethisdir/removethisotherdir/file1")
 				os.Remove("/tmp/removethisdir/removethisotherdir")
+				os.Remove("/tmp/removethisdir/removefile")
 				os.Remove("/tmp/removethisdir")
 			}
 
