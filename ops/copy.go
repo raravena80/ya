@@ -124,7 +124,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	if err != nil {
 		fmt.Fprintln(errPipe, err.Error())
 	}
-	defer procWriter.Close()
+	//defer procWriter.Close()
 
 	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s/.", filepath.Dir(opt.Dst))
 	err = session.Start(scpCmd)
@@ -153,6 +153,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
+	procWriter.Close()
 	session.Close()
 	return executeResult{result: hostname + ":\n",
 		err: err}
