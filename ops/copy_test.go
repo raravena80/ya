@@ -159,7 +159,7 @@ func TestCopy(t *testing.T) {
 			timeout:     5,
 			src:         "/tmp/removethisdir",
 			dst:         "/tmp/removethisdir2",
-			expected:    true,
+			expected:    false,
 			isrecursive: true,
 		},
 		{name: "Basic with valid rsa key scp dir non recursive",
