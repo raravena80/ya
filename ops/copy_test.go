@@ -209,6 +209,7 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+/*
 func TestTearCopy(t *testing.T) {
 	tests := []struct {
 		name string
@@ -232,3 +233,4 @@ func TestTearCopy(t *testing.T) {
 
 	}
 }
+*/
