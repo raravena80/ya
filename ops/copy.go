@@ -100,6 +100,13 @@ func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Wr
 	err = sendByte(procWriter, 0)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not send last byte", err.Error())
+		return err
+	}
+
+	err = fileReader.Close()
+	fmt.Fprintln(errPipe, "Sent file plus null-byte.")
+	if err != nil {
+		fmt.Fprintln(errPipe, err.Error())
 	}
 	return err
 }
@@ -116,7 +123,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 	session, _ := conn.NewSession()
-	//defer session.Close()
+	defer session.Close()
 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
@@ -124,7 +131,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	if err != nil {
 		fmt.Fprintln(errPipe, err.Error())
 	}
-	//defer procWriter.Close()
+	defer procWriter.Close()
 
 	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s/.", filepath.Dir(opt.Dst))
 	err = session.Start(scpCmd)
@@ -153,8 +160,6 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
-	procWriter.Close()
-	session.Close()
 	return executeResult{result: hostname + ":\n",
 		err: err}
 }
