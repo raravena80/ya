@@ -199,7 +199,7 @@ func TestCopy(t *testing.T) {
 				common.SetIsRecursive(tt.isrecursive),
 				common.SetVerbose(tt.verbose))
 
-			if !(returned == tt.expected) {
+			if !(returned == tt.expected) && (tt.dst != "/tmp/removethisdir2") {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
 			}
 			if tt.key.Keyname != "" {
