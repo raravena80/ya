@@ -51,7 +51,7 @@ func init() {
 	}
 }
 
-func TestRun(t *testing.T) {
+func TestCmd(t *testing.T) {
 	tests := []struct {
 		name     string
 		machines []string

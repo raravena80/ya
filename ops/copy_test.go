@@ -158,7 +158,7 @@ func TestCopy(t *testing.T) {
 			useagent:    false,
 			timeout:     5,
 			src:         "/tmp/removethisdir",
-			dst:         "/tmp/removethisdir",
+			dst:         "/tmp/removethisdir2",
 			expected:    true,
 			isrecursive: true,
 		},
@@ -175,7 +175,7 @@ func TestCopy(t *testing.T) {
 			useagent:    false,
 			timeout:     5,
 			src:         "/tmp/removethisdir",
-			dst:         "/tmp/removethisdir2",
+			dst:         "/tmp/removethisdir3",
 			expected:    false,
 			isrecursive: false,
 		},
@@ -222,9 +222,9 @@ func TestTearCopy(t *testing.T) {
 			if tt.id == "copyTestTdown" {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
-				os.Remove("/tmp/removethisdir/removefile")
 				os.Remove("/tmp/removethisdir/removethisotherdir/file1")
 				os.Remove("/tmp/removethisdir/removethisotherdir")
+				os.Remove("/tmp/removethisdir/removefile")
 				os.Remove("/tmp/removethisdir")
 			}
 
