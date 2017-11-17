@@ -159,7 +159,7 @@ func TestCopy(t *testing.T) {
 			timeout:     5,
 			src:         "/tmp/removethisdir",
 			dst:         "/tmp/removethisdir2",
-			expected:    false,
+			expected:    true,
 			isrecursive: true,
 		},
 		{name: "Basic with valid rsa key scp dir non recursive",
@@ -199,7 +199,7 @@ func TestCopy(t *testing.T) {
 				common.SetIsRecursive(tt.isrecursive),
 				common.SetVerbose(tt.verbose))
 
-			if !(returned == tt.expected) && (tt.dst != "/tmp/removethisdir2") {
+			if !(returned == tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
 			}
 			if tt.key.Keyname != "" {
