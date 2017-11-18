@@ -30,6 +30,9 @@ func init() {
 	os.Mkdir("/tmp/removethisdir/removethisotherdir", 0777)
 	ioutil.WriteFile("/tmp/removethisdir/removefile", []byte("Sample file in dir"), 0644)
 	ioutil.WriteFile("/tmp/removethisdir/removethisotherdir/file1", []byte("another_file"), 0644)
+	os.Mkdir("/tmp/anotherremovethisdir", 0777)
+	os.Mkdir("/tmp/anotherremovethisdir/second", 0777)
+	ioutil.WriteFile("/tmp/anotherremovethisdir/second/file1", []byte("another_file"), 000)
 }
 
 func TestCopy(t *testing.T) {
@@ -179,6 +182,40 @@ func TestCopy(t *testing.T) {
 			expected:    false,
 			isrecursive: false,
 		},
+		{name: "Basic with valid rsa key scp file recursive",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey19",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:          "scp",
+			useagent:    false,
+			timeout:     5,
+			src:         "/tmp/removethis1",
+			dst:         "/tmp/wedontcare",
+			expected:    true,
+			isrecursive: true,
+		},
+		{name: "Basic with valid rsa key scp dir recursive file no permissions",
+			machines: []string{"127.0.0.1"},
+			port:     2224,
+			cmd:      "ls",
+			user:     "testuser",
+			key: test.MockSSHKey{
+				Keyname: "/tmp/mockkey20",
+				Content: testdata.PEMBytes["rsa"],
+			},
+			op:          "scp",
+			useagent:    false,
+			timeout:     5,
+			src:         "/tmp/anotherremovethisdir",
+			dst:         "/tmp/anotherremovethisdir2",
+			expected:    false,
+			isrecursive: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -222,10 +259,8 @@ func TestTearCopy(t *testing.T) {
 			if tt.id == "copyTestTdown" {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
-				os.Remove("/tmp/removethisdir/removethisotherdir/file1")
-				os.Remove("/tmp/removethisdir/removethisotherdir")
-				os.Remove("/tmp/removethisdir/removefile")
-				os.Remove("/tmp/removethisdir")
+				os.RemoveAll("/tmp/removethisdir")
+				os.RemoveAll("/tmp/anotherremovethisdir/")
 			}
 
 		})
