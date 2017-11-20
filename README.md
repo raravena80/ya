@@ -19,13 +19,16 @@ Available Commands:
   ssh         Run command acrosss multiple servers
 
 Flags:
+  -s, --agentsock string   SSH agent socket file. If using SSH agent (default "/private/tmp/com.apple.launchd.67UG0GmO3V/Listeners")
       --config string      config file (default is $HOME/.ya.yaml)
   -h, --help               help for ya
   -k, --key string         Ssh key to use for authentication, full path (default "/Users/raravena/.ssh/id_rsa")
   -m, --machines strings   Hosts to run command on
   -p, --port int           Ssh port to connect to (default 22)
+  -t, --timeout int        Timeout for connection (default 5)
   -a, --useagent           Use agent for authentication
   -u, --user string        User to run the command as (default "raravena")
+  -v, --verbose            Set verbose output
 
 Use "ya [command] --help" for more information about a command.
 ```
@@ -45,5 +48,16 @@ ya:
     - 172.1.1.3
     - 172.1.1.4
     - 172.1.1.5
-  command: sudo rm -f /var/log/syslog.*
+```
+SSH Specific
+```
+  ssh:
+    command: sudo rm -f /var/log/syslog.*
+```
+SCP Specific
+```
+  scp:
+    source: /Users/raravena/tmp2
+    destination: /root/tmpboguss
+    recursive: true
 ```
