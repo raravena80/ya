@@ -106,6 +106,8 @@ func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Wr
 
 func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
 
+	var targetDir string
+
 	port := fmt.Sprintf("%v", opt.Port)
 	conn, err := ssh.Dial("tcp", hostname+":"+port, config)
 
@@ -126,16 +128,24 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	}
 	defer procWriter.Close()
 
-	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s/.", filepath.Dir(opt.Dst))
-	err = session.Start(scpCmd)
-	if err != nil {
-		fmt.Fprintln(errPipe, err.Error())
-	}
-
 	srcFileInfo, err := os.Stat(opt.Src)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not stat source file "+opt.Src)
 		return executeResult{result: hostname + ":\n", err: err}
+	}
+
+	// Check if we are sending a directory or single file
+	// Dir is only valid with recursive mode
+	if srcFileInfo.Mode().IsRegular() {
+		targetDir = filepath.Dir(opt.Dst)
+	} else {
+		targetDir = opt.Dst
+	}
+	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s", targetDir)
+	err = session.Start(scpCmd)
+
+	if err != nil {
+		fmt.Fprintln(errPipe, err.Error())
 	}
 
 	if opt.IsRecursive {
