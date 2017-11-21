@@ -260,6 +260,7 @@ func TestTearCopy(t *testing.T) {
 				os.Remove("/tmp/removethis1")
 				os.Remove("/tmp/removethisnoperm")
 				os.RemoveAll("/tmp/removethisdir")
+				os.RemoveAll("/tmp/removethisdir2")
 				os.RemoveAll("/tmp/anotherremovethisdir/")
 			}
 
