@@ -123,7 +123,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
-	processError(err, "Could not open stdin pipe ", errPipe, verbose)
+	processError(err, "Could not open stdin pipe ", errPipe, opt.IsVerbose)
 	defer procWriter.Close()
 
 	srcFileInfo, err := os.Stat(opt.Src)
@@ -141,7 +141,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	}
 	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s", targetDir)
 	err = session.Start(scpCmd)
-	processError(err, "Could not start scp command", errPipe, verbose)
+	processError(err, "Could not start scp command", errPipe, opt.IsVerbose)
 
 	if opt.IsRecursive {
 		if srcFileInfo.IsDir() {
