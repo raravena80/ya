@@ -23,7 +23,14 @@ import (
 	"path/filepath"
 )
 
-func processDir(srcPath string, srcFileInfo os.FileInfo, procWriter, errPipe io.Writer) error {
+func processError(err error, message string, errPipe io.Writer, verbose bool) error {
+	if (err != nil) && verbose {
+		fmt.Fprintln(errPipe, message, err.Error())
+	}
+	return err
+}
+
+func processDir(srcPath string, srcFileInfo os.FileInfo, procWriter, errPipe io.Writer, verbose bool) error {
 
 	err := sendDir(srcPath, srcFileInfo, procWriter, errPipe)
 	if err != nil {
@@ -39,12 +46,12 @@ func processDir(srcPath string, srcFileInfo os.FileInfo, procWriter, errPipe io.
 	}
 	for _, fi := range fis {
 		if fi.IsDir() {
-			err = processDir(filepath.Join(srcPath, fi.Name()), fi, procWriter, errPipe)
+			err = processDir(filepath.Join(srcPath, fi.Name()), fi, procWriter, errPipe, verbose)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = sendFile(filepath.Join(srcPath, fi.Name()), fi, procWriter, errPipe)
+			err = sendFile(filepath.Join(srcPath, fi.Name()), fi, procWriter, errPipe, verbose)
 			if err != nil {
 				return err
 			}
@@ -72,13 +79,12 @@ func sendByte(w io.Writer, val byte) error {
 	return err
 }
 
-func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Writer) error {
+func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Writer, verbose bool) error {
 
 	mode := uint32(srcFileInfo.Mode().Perm())
 	fileReader, err := os.Open(srcFile)
 	if err != nil {
-		fmt.Fprintln(errPipe, "Could not open source file "+srcFile, err.Error())
-		return err
+		return processError(err, "Could not open source file "+srcFile, errPipe, verbose)
 	}
 	defer fileReader.Close()
 
@@ -87,21 +93,16 @@ func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Wr
 
 	_, err = procWriter.Write([]byte(header))
 	if err != nil {
-		fmt.Fprintln(errPipe, "Could not write scp header", err.Error())
-		return err
+		return processError(err, "Could not write scp header", errPipe, verbose)
 	}
 
 	_, err = io.Copy(procWriter, fileReader)
 	if err != nil {
-		fmt.Fprintln(errPipe, "Could not send file", err.Error())
-		return err
+		return processError(err, "Could not send file", errPipe, verbose)
 	}
 	// terminate with null byte
 	err = sendByte(procWriter, 0)
-	if err != nil {
-		fmt.Fprintln(errPipe, "Could not send last byte", err.Error())
-	}
-	return err
+	return processError(err, "Could not send the last byte", errPipe, verbose)
 }
 
 func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
@@ -122,10 +123,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
-
-	if err != nil {
-		fmt.Fprintln(errPipe, err.Error())
-	}
+	processError(err, "Could not open stdin pipe ", errPipe, opt.IsVerbose)
 	defer procWriter.Close()
 
 	srcFileInfo, err := os.Stat(opt.Src)
@@ -143,23 +141,20 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	}
 	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s", targetDir)
 	err = session.Start(scpCmd)
-
-	if err != nil {
-		fmt.Fprintln(errPipe, err.Error())
-	}
+	processError(err, "Could not start scp command", errPipe, opt.IsVerbose)
 
 	if opt.IsRecursive {
 		if srcFileInfo.IsDir() {
-			err = processDir(opt.Src, srcFileInfo, procWriter, errPipe)
+			err = processDir(opt.Src, srcFileInfo, procWriter, errPipe, opt.IsVerbose)
 		} else {
-			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe)
+			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe, opt.IsVerbose)
 		}
 	} else {
 		if srcFileInfo.IsDir() {
 			fmt.Fprintln(errPipe, "Not a regular file:", opt.Src, "specify recursive")
 			err = fmt.Errorf("Not a regular file %v", opt.Src)
 		} else {
-			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe)
+			err = sendFile(opt.Src, srcFileInfo, procWriter, errPipe, opt.IsVerbose)
 		}
 	}
 
