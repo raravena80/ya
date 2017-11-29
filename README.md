@@ -7,7 +7,7 @@ Ya runs or copies items across multiple servers using SSH or SCP
 
 ## Usage
 ```
-Ya runs commands or copies files or directories,
+Ya runs a command or copies files or directories,
 across multiple servers, using SSH or SCP
 
 Usage:
