@@ -61,3 +61,42 @@ SCP Specific
     destination: /root/tmpboguss
     recursive: true
 ```
+
+## SSH Examples
+
+Makes /tmp/tmpdir in 17.2.2.2 and 17.2.3.2:
+```
+$ ya ssh -c "mkdir /tmp/tmpdir" -m 17.2.2.2,17.2.3.2
+```
+
+Creates /tmp/file file in host1 and host2
+```
+$ ya ssh -c "touch /tmp/file" -m host1,host2
+```
+
+Moves a file and creates another one in host1 and host2:
+```
+$ ya ssh -c "mv /tmp/file1 /tmp/file2; touch /tmp/file3" -m host1,host2
+```
+
+Runs with default in `~/.sshrunner.yaml`
+```
+$ ya ssh
+```
+
+## SCP Examples
+
+Copies from local /tmp/tmpfile to /tmp/tmpfile2 in 17.2.2.2 and 17.2.3.2:
+```
+$ ya scp --src /tmp/tmpfile --dst /tmp/tmpfile2  -m 17.2.2.2,17.2.3.2
+```
+
+Copies /tmp/dir directory under /tmp in host1 and host2 (recursively)
+```
+$ ya scp  -r --src /tmp/dir  --dst /tmp host1,host2
+```
+
+Runs with default in `~/.ya.yaml`
+```
+$ ya scp
+```
