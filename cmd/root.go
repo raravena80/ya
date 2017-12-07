@@ -31,6 +31,7 @@ var (
 	timeout   int
 	agentsock string
 	machines  []string
+	Version   string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -39,6 +40,7 @@ var RootCmd = &cobra.Command{
 	Short: "Ya runs commands or copies files across multiple servers",
 	Long: `Ya runs commands or copies files or directories,
 across multiple servers, using SSH or SCP`,
+	Version: Version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
