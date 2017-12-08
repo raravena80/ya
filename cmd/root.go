@@ -32,6 +32,7 @@ var (
 	agentsock string
 	machines  []string
 	Version   string
+	Gitcommit string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -40,7 +41,7 @@ var RootCmd = &cobra.Command{
 	Short: "Ya runs commands or copies files across multiple servers",
 	Long: `Ya runs commands or copies files or directories,
 across multiple servers, using SSH or SCP`,
-	Version: Version,
+	Version: fmt.Sprintf("%v\ncommit %v", Version, Gitcommit),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,7 +61,6 @@ func init() {
 
 	// Persistent flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ya.yaml)")
-
 	RootCmd.PersistentFlags().StringSliceVarP(&machines, "machines", "m", []string{}, "Hosts to run command on")
 	viper.BindPFlag("ya.machines", RootCmd.PersistentFlags().Lookup("machines"))
 	RootCmd.PersistentFlags().IntVarP(&port, "port", "p", 22, "Ssh port to connect to")
