@@ -64,7 +64,7 @@ func SSHSession(options ...func(*common.Options)) bool {
 		go func(hostname string, execFunc execFuncType) {
 			res := execFunc(opt, hostname, config)
 			if res.err == nil {
-				fmt.Println(res.result)
+				fmt.Print(res.result)
 				done <- true
 			} else {
 				fmt.Println(res.result, "\n", res.err)
