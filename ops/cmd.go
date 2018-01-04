@@ -28,7 +28,7 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 
 	if err != nil {
 		return executeResult{
-			result: "Connection error",
+			result: hostname + ":\n",
 			err:    err,
 		}
 	}
