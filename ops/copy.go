@@ -114,7 +114,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 
 	if err != nil {
 		return executeResult{
-			result: "Connection error",
+			result: hostname + ":\n",
 			err:    err,
 		}
 	}
@@ -129,7 +129,10 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	srcFileInfo, err := os.Stat(opt.Src)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not stat source file "+opt.Src)
-		return executeResult{result: hostname + ":\n", err: err}
+		return executeResult{
+			result: hostname + ":\n",
+			err:    err,
+		}
 	}
 
 	// Check if we are sending a directory or single file
@@ -158,6 +161,8 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
-	return executeResult{result: hostname + ":\n",
-		err: err}
+	return executeResult{
+		result: hostname + ":\n",
+		err:    err,
+	}
 }
