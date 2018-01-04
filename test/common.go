@@ -56,12 +56,12 @@ func SetupSSHAgent(socketFile string) {
 			c, err := ln.Accept()
 			defer c.Close()
 			if err != nil {
-				panic(fmt.Sprintf("Couldn't accept connection to agent tests %v", err))
+				fmt.Sprintf("Couldn't accept connection to agent tests %v", err)
 			}
 			go func(c io.ReadWriter) {
 				err := agent.ServeAgent(a, c)
 				if err != nil {
-					panic(fmt.Sprintf("Couldn't serve ssh agent for tests %v", err))
+					fmt.Sprintf("Couldn't serve ssh agent for tests %v", err)
 				}
 
 			}(c)
