@@ -26,16 +26,19 @@ type executeResult struct {
 	err    error
 }
 
+type execFuncType func(common.Options, string, *ssh.ClientConfig) executeResult
+
 // SSHSession Create an SSH Session
 func SSHSession(options ...func(*common.Options)) bool {
+	var execFunc execFuncType
+
 	opt := common.Options{}
 	for _, option := range options {
 		option(&opt)
 	}
 
 	// in opt.Timeout seconds the message will come to timeout channel
-	timeout := time.After(time.Duration(opt.Timeout) * time.Second)
-	results := make(chan executeResult, len(opt.Machines)+1)
+	done := make(chan bool, len(opt.Machines))
 
 	sshAuth := []ssh.AuthMethod{
 		ssh.PublicKeys(common.MakeKeyring(
@@ -47,33 +50,32 @@ func SSHSession(options ...func(*common.Options)) bool {
 		User:            opt.User,
 		Auth:            sshAuth,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         time.Duration(opt.Timeout) * time.Second,
 	}
 
 	for _, m := range opt.Machines {
-		go func(hostname string) {
-			// we’ll write results into the buffered channel of strings
-			switch opt.Op {
-			case "ssh":
-				results <- executeCmd(opt, hostname, config)
-			case "scp":
-				results <- executeCopy(opt, hostname, config)
+		// we’ll write results into the buffered channel of strings
+		switch opt.Op {
+		case "ssh":
+			execFunc = executeCmd
+		case "scp":
+			execFunc = executeCopy
+		}
+		go func(hostname string, execFunc execFuncType) {
+			res := execFunc(opt, hostname, config)
+			if res.err == nil {
+				fmt.Println(res.result)
+				done <- true
+			} else {
+				fmt.Println(res.result, "\n", res.err)
+				done <- false
 			}
-		}(m)
+		}(m, execFunc)
 	}
 
 	retval := true
-
 	for i := 0; i < len(opt.Machines); i++ {
-		select {
-		case res := <-results:
-			if res.err == nil {
-				fmt.Print(res.result)
-			} else {
-				fmt.Println(res.result, "\n", res.err)
-				retval = false
-			}
-		case <-timeout:
-			fmt.Println("Timed out!")
+		if !<-done {
 			retval = false
 		}
 	}
