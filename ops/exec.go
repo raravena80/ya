@@ -28,6 +28,14 @@ type executeResult struct {
 
 type execFuncType func(common.Options, string, *ssh.ClientConfig) executeResult
 
+// Makes a common execResult
+func makeExecResult(hostname, output string, err error) executceResult {
+	return executeResult{
+		result: hostname + ":\n" + output,
+		err:    err,
+	}
+}
+
 // SSHSession Create an SSH Session
 func SSHSession(options ...func(*common.Options)) bool {
 	var execFunc execFuncType

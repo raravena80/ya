@@ -113,10 +113,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	conn, err := ssh.Dial("tcp", hostname+":"+port, config)
 
 	if err != nil {
-		return executeResult{
-			result: hostname + ":\n",
-			err:    err,
-		}
+		return makeExecResult(hostname, "", err)
 	}
 	session, _ := conn.NewSession()
 	defer session.Close()
@@ -129,10 +126,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	srcFileInfo, err := os.Stat(opt.Src)
 	if err != nil {
 		fmt.Fprintln(errPipe, "Could not stat source file "+opt.Src)
-		return executeResult{
-			result: hostname + ":\n",
-			err:    err,
-		}
+		return makeExecResult(hostname, "", err)
 	}
 
 	// Check if we are sending a directory or single file
@@ -161,8 +155,5 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
-	return executeResult{
-		result: hostname + ":\n",
-		err:    err,
-	}
+	return makeExecResult(hostname, "Finished", err)
 }

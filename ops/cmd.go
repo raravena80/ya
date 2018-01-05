@@ -40,6 +40,8 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 	session.Stdout = &stdoutBuf
 	err = session.Run(opt.Cmd)
 
-	return executeResult{result: hostname + ":\n" + stdoutBuf.String(),
-		err: err}
+	return executeResult{
+		result: hostname + ":\n" + stdoutBuf.String(),
+		err:    err,
+	}
 }
