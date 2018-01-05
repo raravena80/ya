@@ -29,7 +29,7 @@ type executeResult struct {
 type execFuncType func(common.Options, string, *ssh.ClientConfig) executeResult
 
 // Makes a common execResult
-func makeExecResult(hostname, output string, err error) executceResult {
+func makeExecResult(hostname, output string, err error) executeResult {
 	return executeResult{
 		result: hostname + ":\n" + output,
 		err:    err,
