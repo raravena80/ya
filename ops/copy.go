@@ -155,5 +155,5 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 		}
 	}
 
-	return makeExecResult(hostname, "Finished", err)
+	return makeExecResult(hostname, "Finished\n", err)
 }
