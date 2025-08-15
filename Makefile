@@ -1,8 +1,7 @@
 GOPKG_BASE := github.com/raravena80/ya
-GOPKGS := $(shell go list ./... | grep -v /vendor/)
-GOPKG_COVERS := $(shell go list ./... | grep -v '^$(GOPKG_BASE)/vendor/' | grep -v '^$(GOPKG_BASE)$$' | sed "s|^$(GOPKG_BASE)/|cover/|" | sed 's/$$/.cover/')
+GOPKGS := $(shell go list ./...)
+GOPKG_COVERS := $(shell go list ./... | grep -v '^$(GOPKG_BASE)$$' | sed "s|^$(GOPKG_BASE)/|cover/|" | sed 's/$$/.cover/')
 COVER_MODE := atomic
-FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
 GOFILES = $(shell find . -name '*.go' -not -path './vendor/*')
 # Define in your CI system as an env var
 COVERALLS_TOKEN ?= undefined
@@ -26,7 +25,7 @@ cover/%.cover: %
 
 sshserverstart:
 	echo 'Start SSH Test Server'
-	gotestsshd & > /dev/null 2>&1
+	go run github.com/raravena80/gotestsshd & > /dev/null 2>&1
 
 sshserverstop:
 	echo 'Stop SSH Test Server'
@@ -37,7 +36,7 @@ cover/all: $(GOPKG_COVERS)
 	for f in $(GOPKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
 goveralls: cover/all
-	$(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=circle-ci \
+	goveralls -coverprofile=cover/all -service=circle-ci \
 		-repotoken $(COVERALLS_TOKEN) || echo "not sending to coveralls"
 
 circle: goveralls

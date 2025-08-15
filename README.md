@@ -79,7 +79,7 @@ Moves a file and creates another one in host1 and host2:
 $ ya ssh -c "mv /tmp/file1 /tmp/file2; touch /tmp/file3" -m host1,host2
 ```
 
-Runs with default in `~/.sshrunner.yaml`
+Runs with default in `~/.ya.yaml`
 ```
 $ ya ssh
 ```
