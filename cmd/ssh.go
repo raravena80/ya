@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,19 +30,7 @@ var sshCmd = &cobra.Command{
 	Long: `Run a command across multiple servers,
 using SSH.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var options []func(*common.Options)
-		options = append(options,
-			common.SetMachines(viper.GetStringSlice("ya.machines")))
-		options = append(options,
-			common.SetUser(viper.GetString("ya.user")))
-		options = append(options,
-			common.SetPort(viper.GetInt("ya.port")))
-		options = append(options,
-			common.SetKey(viper.GetString("ya.key")))
-		options = append(options,
-			common.SetUseAgent(viper.GetBool("ya.useagent")))
-		options = append(options,
-			common.SetTimeout(viper.GetInt("ya.timeout")))
+		options := BuildCommonOptions()
 		options = append(options,
 			common.SetCmd(viper.GetString("ya.ssh.command")))
 		options = append(options,

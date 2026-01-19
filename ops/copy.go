@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import (
 	"os"
 	"path/filepath"
 )
+
+// DefaultSCPPath is the default path to the scp binary
+const DefaultSCPPath = "/usr/bin/scp"
 
 func processError(err error, message string, errPipe io.Writer, verbose bool) error {
 	if (err != nil) && verbose {
@@ -115,12 +118,17 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	if err != nil {
 		return makeExecResult(hostname, "", err)
 	}
-	session, _ := conn.NewSession()
+	session, err := conn.NewSession()
+	if err != nil {
+		return makeExecResult(hostname, "", fmt.Errorf("failed to create SSH session: %w", err))
+	}
 	defer session.Close()
 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
-	processError(err, "Could not open stdin pipe ", errPipe, opt.IsVerbose)
+	if err != nil {
+		return makeExecResult(hostname, "", fmt.Errorf("could not open stdin pipe: %w", err))
+	}
 	defer procWriter.Close()
 
 	srcFileInfo, err := os.Stat(opt.Src)
@@ -136,9 +144,11 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	} else {
 		targetDir = opt.Dst
 	}
-	scpCmd := fmt.Sprintf("/usr/bin/scp -qrt %s", targetDir)
+	scpCmd := fmt.Sprintf("%s -qrt %s", DefaultSCPPath, targetDir)
 	err = session.Start(scpCmd)
-	processError(err, "Could not start scp command", errPipe, opt.IsVerbose)
+	if err != nil {
+		return makeExecResult(hostname, "", fmt.Errorf("could not start scp command: %w", err))
+	}
 
 	if opt.IsRecursive {
 		if srcFileInfo.IsDir() {

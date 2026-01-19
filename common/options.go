@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@ package common
 
 // Options Main options struct
 type Options struct {
-	Machines    []string
-	Port        int
-	Timeout     int
-	User        string
-	Cmd         string
-	Key         string
-	Src         string
-	Dst         string
-	AgentSock   string
-	Op          string
-	UseAgent    bool
-	IsRecursive bool
-	IsVerbose   bool
+	Machines     []string
+	Port         int
+	Timeout      int
+	User         string
+	Cmd          string
+	Key          string
+	Src          string
+	Dst          string
+	AgentSock    string
+	Op           string
+	UseAgent     bool
+	IsRecursive  bool
+	IsVerbose    bool
+	KnownHosts   string
+	InsecureHost bool
 }
 
 // SetUser Sets user for ssh session
@@ -120,5 +122,19 @@ func SetIsRecursive(r bool) func(*Options) {
 func SetVerbose(v bool) func(*Options) {
 	return func(e *Options) {
 		e.IsVerbose = v
+	}
+}
+
+// SetKnownHosts Sets the known_hosts file path for SSH host key verification
+func SetKnownHosts(k string) func(*Options) {
+	return func(e *Options) {
+		e.KnownHosts = k
+	}
+}
+
+// SetInsecureHost Sets whether to skip host key verification (not recommended for production)
+func SetInsecureHost(i bool) func(*Options) {
+	return func(e *Options) {
+		e.InsecureHost = i
 	}
 }

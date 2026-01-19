@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,13 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 		}
 	}
 
-	session, _ := conn.NewSession()
+	session, err := conn.NewSession()
+	if err != nil {
+		return executeResult{
+			result: hostname + ":\n",
+			err:    fmt.Errorf("failed to create SSH session: %w", err),
+		}
+	}
 	defer session.Close()
 
 	var stdoutBuf bytes.Buffer

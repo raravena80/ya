@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,12 +56,12 @@ func SetupSSHAgent(socketFile string) {
 			c, err := ln.Accept()
 			defer c.Close()
 			if err != nil {
-				fmt.Sprintf("Couldn't accept connection to agent tests %v", err)
+				fmt.Printf("Couldn't accept connection to agent tests %v\n", err)
 			}
 			go func(c io.ReadWriter) {
 				err := agent.ServeAgent(a, c)
 				if err != nil {
-					fmt.Sprintf("Couldn't serve ssh agent for tests %v", err)
+					fmt.Printf("Couldn't serve ssh agent for tests %v\n", err)
 				}
 
 			}(c)

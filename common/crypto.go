@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package common
 
 import (
+	"fmt"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"io/ioutil"
@@ -25,26 +26,39 @@ import (
 func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	fp, err := os.Open(keyname)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to open key file %s: %w", keyname, err)
 	}
 	defer fp.Close()
 
-	buf, _ := ioutil.ReadAll(fp)
-	signer, _ = ssh.ParsePrivateKey(buf)
-	return
+	buf, err := ioutil.ReadAll(fp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key file %s: %w", keyname, err)
+	}
+
+	signer, err = ssh.ParsePrivateKey(buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key %s: %w", keyname, err)
+	}
+	return signer, nil
 }
 
 // MakeKeyring Makes an ssh key ring for authentication
 func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 	signers := []ssh.Signer{}
 
-	if useAgent == true {
-		aConn, _ := net.Dial("unix", agentSock)
-		sshAgent := agent.NewClient(aConn)
-		aSigners, _ := sshAgent.Signers()
-		for _, signer := range aSigners {
-			signers = append(signers, signer)
+	if useAgent {
+		aConn, err := net.Dial("unix", agentSock)
+		if err == nil {
+			defer aConn.Close()
+			sshAgent := agent.NewClient(aConn)
+			aSigners, err := sshAgent.Signers()
+			if err == nil {
+				for _, signer := range aSigners {
+					signers = append(signers, signer)
+				}
+			}
 		}
+		// Continue with key-based auth even if agent fails
 	}
 
 	keys := []string{key}
@@ -54,6 +68,15 @@ func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 		if err == nil {
 			signers = append(signers, signer)
 		}
+		// Log error but don't fail - user may have provided an invalid key
+		if err != nil && keyname != "" {
+			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+		}
 	}
+
+	if len(signers) == 0 {
+		fmt.Fprintln(os.Stderr, "Warning: No valid SSH authentication methods available")
+	}
+
 	return signers
 }

@@ -1,4 +1,4 @@
-// Copyright © 2017 Ricardo Aravena <raravena@branch.io>
+// Copyright © 2017 Ricardo Aravena <raravena80@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/raravena80/ya/common"
 	"golang.org/x/crypto/ssh"
+	"os"
 	"time"
 )
 
@@ -34,6 +35,28 @@ func makeExecResult(hostname, output string, err error) executeResult {
 		result: hostname + ":\n" + output,
 		err:    err,
 	}
+}
+
+// getHostKeyCallback returns an appropriate HostKeyCallback based on options.
+// Note: The golang.org/x/crypto/ssh package does not include built-in known_hosts
+// verification. Proper host key verification would require an external package like
+// github.com/skeema/knownhosts. This implementation warns users about the security
+// implications and provides an explicit opt-in for insecure mode.
+func getHostKeyCallback(opt common.Options) ssh.HostKeyCallback {
+	// If insecure mode is explicitly requested, use the insecure callback with a warning
+	if opt.InsecureHost {
+		fmt.Fprintln(os.Stderr, "Warning: Using insecure host key verification. This is not recommended for production.")
+		return ssh.InsecureIgnoreHostKey()
+	}
+
+	// Default behavior: warn about security concern and use InsecureIgnoreHostKey
+	// In production, this should be replaced with proper known_hosts verification
+	// using a package like github.com/skeema/knownhosts
+	fmt.Fprintln(os.Stderr, "Warning: Host key verification is disabled. This is a security risk.")
+	fmt.Fprintln(os.Stderr, "For production use, implement proper known_hosts verification.")
+	fmt.Fprintln(os.Stderr, "Use --insecure-host to suppress this warning (not recommended).")
+
+	return ssh.InsecureIgnoreHostKey()
 }
 
 // SSHSession Create an SSH Session
@@ -57,12 +80,12 @@ func SSHSession(options ...func(*common.Options)) bool {
 	config := &ssh.ClientConfig{
 		User:            opt.User,
 		Auth:            sshAuth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: getHostKeyCallback(opt),
 		Timeout:         time.Duration(opt.Timeout) * time.Second,
 	}
 
 	for _, m := range opt.Machines {
-		// we’ll write results into the buffered channel of strings
+		// we'll write results into the buffered channel of strings
 		switch opt.Op {
 		case "ssh":
 			execFunc = executeCmd

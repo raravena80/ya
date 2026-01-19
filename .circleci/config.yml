@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /go/src/github.com/raravena80/ya
     docker:
-      - image: circleci/golang:1.18
+      - image: cimg/go:1.24
     environment:
       TEST_RESULTS: /tmp/test-results
     steps:
