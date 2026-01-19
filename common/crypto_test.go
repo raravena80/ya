@@ -222,3 +222,62 @@ func TestTearDown(t *testing.T) {
 
 	}
 }
+
+func TestMakeSignerErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		keyname     string
+		expectError bool
+	}{
+		{name: "Non-existent key file",
+			keyname:     "/tmp/nonexistent_key_12345",
+			expectError: true},
+		{name: "Invalid key file",
+			keyname:     "/tmp/invalid_key",
+			expectError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Invalid key file" {
+				ioutil.WriteFile(tt.keyname, []byte("invalid key content"), 0644)
+				defer os.Remove(tt.keyname)
+			}
+
+			_, err := makeSigner(tt.keyname)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for %s, got nil", tt.name)
+			}
+		})
+	}
+}
+
+func TestMakeKeyringErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		key         string
+		agentSock   string
+		useAgent    bool
+		expectEmpty bool
+	}{
+		{name: "Invalid key file",
+			key:         "/tmp/nonexistent_key_xyz",
+			agentSock:   "",
+			useAgent:    false,
+			expectEmpty: true},
+		{name: "Empty key with agent",
+			key:         "",
+			agentSock:   "/tmp/nonexistent_agent",
+			useAgent:    true,
+			expectEmpty: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			signers := MakeKeyring(tt.key, tt.agentSock, tt.useAgent)
+			if tt.expectEmpty && len(signers) != 0 {
+				t.Errorf("Expected empty signers for %s, got %d", tt.name, len(signers))
+			}
+		})
+	}
+}

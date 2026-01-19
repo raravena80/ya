@@ -1,23 +1,35 @@
 version: 2
 jobs:
   build:
-    working_directory: /go/src/github.com/raravena80/ya
+    working_directory: ~/project
     docker:
       - image: cimg/go:1.24
     environment:
       TEST_RESULTS: /tmp/test-results
+      GOPATH: /home/circleci/go
+      GOBIN: /home/circleci/go/bin
+      PATH: /home/circleci/go/bin:/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
     steps:
       - checkout
       - run:
           name: Test Results Dir
           command: mkdir -p $TEST_RESULTS
       - run:
-          name: Get all dependencies
+          name: Install tools
           command: |
-            go get github.com/jstemmer/go-junit-report
-            go get golang.org/x/tools/cmd/cover
-            go get github.com/mattn/goveralls
+            go install github.com/jstemmer/go-junit-report@latest
+            go install golang.org/x/tools/cmd/cover@latest
+            go install github.com/mattn/goveralls@latest
             go mod download
+      - run:
+          name: Verify installation
+          command: |
+            echo "GOPATH=$GOPATH"
+            echo "GOBIN=$GOBIN"
+            echo "PATH=$PATH"
+            ls -la $GOBIN/
+            which go-junit-report
+            go-junit-report --version
       - run:
           name: Start ssh server for tests
           command: go run github.com/raravena80/gotestsshd > /dev/null 2>&1
@@ -25,8 +37,11 @@ jobs:
       - run:
           name: Run unit tests and coverage
           command: |
-            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            make circle COVERALLS_TOKEN=$COVERALLS_TOKEN | tee ${TEST_RESULTS}/go-test.out
+            set +e
+            go test -v ./... -coverprofile=${TEST_RESULTS}/coverage.out 2>&1 | tee ${TEST_RESULTS}/go-test.out
+            TEST_EXIT=${PIPESTATUS[0]}
+            go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml
+            exit ${TEST_EXIT}
       - run: make
       - store_test_results:
           path: /tmp/test-results
