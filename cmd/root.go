@@ -58,7 +58,17 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	curUser := os.Getenv("LOGNAME")
-	sshKey := os.Getenv("HOME") + "/.ssh/id_rsa"
+	home := os.Getenv("HOME")
+	if home == "" {
+		var err error
+		home, err = homedir.Dir()
+		if err != nil {
+			fmt.Printf("Error: could not determine home directory: %v\n", err)
+			//go:nocovline // os.Exit hard to test in unit tests
+			os.Exit(1)
+		}
+	}
+	sshKey := home + "/.ssh/id_rsa"
 
 	// Persistent flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ya.yaml)")

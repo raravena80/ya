@@ -20,6 +20,8 @@ import (
 )
 
 // BuildCommonOptions constructs the common options shared between SSH and SCP commands
+// from the viper configuration. It returns a slice of option functions that can be
+// applied to the Options struct.
 func BuildCommonOptions() []func(*common.Options) {
 	var options []func(*common.Options)
 	options = append(options,

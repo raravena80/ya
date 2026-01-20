@@ -389,6 +389,61 @@ func TestDefaultSCPPath(t *testing.T) {
 	}
 }
 
+func TestValidatePath(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		expectError bool
+	}{
+		{name: "Valid path", path: "/tmp/testfile.txt", expectError: false},
+		{name: "Path with traversal", path: "/tmp/../etc/passwd", expectError: true},
+		{name: "Path with double dot in middle", path: "/home/user/../test", expectError: true},
+		{name: "Relative path with single dot", path: "./test", expectError: false},
+		{name: "Clean path without traversal", path: "/var/log/test.log", expectError: false},
+		{name: "Clean path with home directory", path: "/home/user/test.txt", expectError: false},
+		{name: "Relative path with double dot", path: "../test", expectError: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePath(tt.path)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for path %s, got nil", tt.path)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error for path %s, got %v", tt.path, err)
+			}
+		})
+	}
+}
+
+func TestValidateSCPPath(t *testing.T) {
+	// Create a temporary non-executable file for testing
+	tmpNonExec := "/tmp/tmp_scp_non_exec_test"
+	os.WriteFile(tmpNonExec, []byte("#!/bin/sh\n"), 0644)
+	defer os.Remove(tmpNonExec)
+
+	tests := []struct {
+		name        string
+		path        string
+		expectError bool
+	}{
+		{name: "Default SCP path", path: DefaultSCPPath, expectError: false},
+		{name: "Non-existent path", path: "/nonexistent/path/to/scp", expectError: true},
+		{name: "Non-executable file", path: tmpNonExec, expectError: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateSCPPath(tt.path)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for path %s, got nil", tt.path)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error for path %s, got %v", tt.path, err)
+			}
+		})
+	}
+}
+
 // Helper functions
 type mockFileInfo struct {
 	name string

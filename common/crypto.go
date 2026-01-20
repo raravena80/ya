@@ -17,12 +17,20 @@ package common
 import (
 	"fmt"
 	"io"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"net"
 	"os"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
+const (
+	// maxKeySize is the maximum allowed size for an SSH key file (1MB)
+	maxKeySize = 1024 * 1024
+)
+
+// makeSigner creates an SSH signer from a private key file.
+// It validates the key file permissions and size before parsing.
 func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	fp, err := os.Open(keyname)
 	if err != nil {
@@ -30,7 +38,19 @@ func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	}
 	defer fp.Close()
 
-	buf, err := io.ReadAll(fp)
+	// Check file permissions for security
+	info, err := fp.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat key file %s: %w", keyname, err)
+	}
+	perm := info.Mode().Perm()
+	if perm != 0600 && perm != 0400 {
+		fmt.Fprintf(os.Stderr, "Warning: SSH key file has insecure permissions: %03o (expected 0600 or 0400)\n", perm)
+	}
+
+	// Limit the read size to prevent potential issues with very large files
+	limitedReader := io.LimitReader(fp, maxKeySize)
+	buf, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read key file %s: %w", keyname, err)
 	}
@@ -42,7 +62,9 @@ func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	return signer, nil
 }
 
-// MakeKeyring Makes an ssh key ring for authentication
+// MakeKeyring creates an SSH keyring for authentication.
+// It attempts to use the SSH agent if useAgent is true, and also tries to load
+// the key from the specified key file. Returns a slice of SSH signers.
 func MakeKeyring(key, agentSock string, useAgent bool) []ssh.Signer {
 	signers := []ssh.Signer{}
 
