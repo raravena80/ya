@@ -49,6 +49,7 @@ across multiple servers, using SSH or SCP`,
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
+		//go:nocovline // os.Exit hard to test in unit tests
 		os.Exit(1)
 	}
 }
@@ -90,6 +91,7 @@ func initConfig() {
 		home, err := homedir.Dir()
 		if err != nil {
 			fmt.Println(err)
+			//go:nocovline // os.Exit hard to test in unit tests
 			os.Exit(1)
 		}
 

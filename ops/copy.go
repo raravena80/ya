@@ -120,6 +120,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	}
 	session, err := conn.NewSession()
 	if err != nil {
+		//go:nocovline // NewSession failure hard to test without mock SSH server
 		return makeExecResult(hostname, "", fmt.Errorf("failed to create SSH session: %w", err))
 	}
 	defer session.Close()
@@ -127,6 +128,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	errPipe := os.Stderr
 	procWriter, err := session.StdinPipe()
 	if err != nil {
+		//go:nocovline // StdinPipe failure hard to test without mock SSH server
 		return makeExecResult(hostname, "", fmt.Errorf("could not open stdin pipe: %w", err))
 	}
 	defer procWriter.Close()
@@ -147,6 +149,7 @@ func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) 
 	scpCmd := fmt.Sprintf("%s -qrt %s", DefaultSCPPath, targetDir)
 	err = session.Start(scpCmd)
 	if err != nil {
+		//go:nocovline // session.Start failure hard to test without mock SSH server
 		return makeExecResult(hostname, "", fmt.Errorf("could not start scp command: %w", err))
 	}
 

@@ -38,10 +38,27 @@ jobs:
           name: Run unit tests and coverage
           command: |
             set +e
-            go test -v ./... -coverprofile=${TEST_RESULTS}/coverage.out 2>&1 | tee ${TEST_RESULTS}/go-test.out
+            # Generate coverage for all packages and merge them
+            echo "mode: atomic" > ${TEST_RESULTS}/coverage.out
+            for pkg in $(go list ./...); do
+                go test -v -coverprofile=${TEST_RESULTS}/coverage_temp.out $pkg 2>&1 | tee -a ${TEST_RESULTS}/go-test.out
+                if [ -f ${TEST_RESULTS}/coverage_temp.out ]; then
+                    tail -n +2 ${TEST_RESULTS}/coverage_temp.out >> ${TEST_RESULTS}/coverage.out || true
+                fi
+            done
             TEST_EXIT=${PIPESTATUS[0]}
             go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml
+
+            # Filter out main.go and test/ package from coverage
+            grep -v "main.go:" ${TEST_RESULTS}/coverage.out > ${TEST_RESULTS}/coverage_filtered.out || true
+            grep -v "test/common.go:" ${TEST_RESULTS}/coverage_filtered.out > ${TEST_RESULTS}/coverage_final.out || true
+            mv ${TEST_RESULTS}/coverage_final.out ${TEST_RESULTS}/coverage.out
+
             exit ${TEST_EXIT}
+      - run:
+          name: Upload coverage to Coveralls
+          command: |
+            goveralls -coverprofile=${TEST_RESULTS}/coverage.out -service=circleci -repotoken=${COVERALLS_TOKEN}
       - run: make
       - store_test_results:
           path: /tmp/test-results

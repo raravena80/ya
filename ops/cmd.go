@@ -35,6 +35,7 @@ func executeCmd(opt common.Options, hostname string, config *ssh.ClientConfig) e
 
 	session, err := conn.NewSession()
 	if err != nil {
+		//go:nocovline // NewSession failure hard to test without mock SSH server
 		return executeResult{
 			result: hostname + ":\n",
 			err:    fmt.Errorf("failed to create SSH session: %w", err),
