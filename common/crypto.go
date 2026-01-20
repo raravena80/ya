@@ -16,9 +16,9 @@ package common
 
 import (
 	"fmt"
+	"io"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
-	"io/ioutil"
 	"net"
 	"os"
 )
@@ -30,7 +30,7 @@ func makeSigner(keyname string) (signer ssh.Signer, err error) {
 	}
 	defer fp.Close()
 
-	buf, err := ioutil.ReadAll(fp)
+	buf, err := io.ReadAll(fp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read key file %s: %w", keyname, err)
 	}

@@ -16,10 +16,12 @@ package ops
 
 import (
 	"fmt"
-	"github.com/raravena80/ya/common"
-	"golang.org/x/crypto/ssh"
 	"os"
 	"time"
+
+	"github.com/raravena80/ya/common"
+	"github.com/skeema/knownhosts"
+	"golang.org/x/crypto/ssh"
 )
 
 type executeResult struct {
@@ -38,10 +40,8 @@ func makeExecResult(hostname, output string, err error) executeResult {
 }
 
 // getHostKeyCallback returns an appropriate HostKeyCallback based on options.
-// Note: The golang.org/x/crypto/ssh package does not include built-in known_hosts
-// verification. Proper host key verification would require an external package like
-// github.com/skeema/knownhosts. This implementation warns users about the security
-// implications and provides an explicit opt-in for insecure mode.
+// It uses known_hosts file for proper host key verification, with fallback to
+// insecure mode when explicitly requested or when known_hosts is not available.
 func getHostKeyCallback(opt common.Options) ssh.HostKeyCallback {
 	// If insecure mode is explicitly requested, use the insecure callback with a warning
 	if opt.InsecureHost {
@@ -49,14 +49,19 @@ func getHostKeyCallback(opt common.Options) ssh.HostKeyCallback {
 		return ssh.InsecureIgnoreHostKey()
 	}
 
-	// Default behavior: warn about security concern and use InsecureIgnoreHostKey
-	// In production, this should be replaced with proper known_hosts verification
-	// using a package like github.com/skeema/knownhosts
-	fmt.Fprintln(os.Stderr, "Warning: Host key verification is disabled. This is a security risk.")
-	fmt.Fprintln(os.Stderr, "For production use, implement proper known_hosts verification.")
-	fmt.Fprintln(os.Stderr, "Use --insecure-host to suppress this warning (not recommended).")
+	// Try to use the user's known_hosts file for proper host key verification
+	knownHostsPath := os.ExpandEnv("~/.ssh/known_hosts")
+	callback, err := knownhosts.New(knownHostsPath)
+	if err != nil {
+		// If known_hosts file doesn't exist or is unreadable, fall back to insecure mode with warning
+		fmt.Fprintln(os.Stderr, "Warning: Could not read known_hosts file:", err)
+		fmt.Fprintln(os.Stderr, "Warning: Falling back to insecure host key verification.")
+		fmt.Fprintln(os.Stderr, "To fix this, ensure ~/.ssh/known_hosts exists or use --insecure-host to suppress this warning.")
+		return ssh.InsecureIgnoreHostKey()
+	}
 
-	return ssh.InsecureIgnoreHostKey()
+	// Wrap the knownhosts callback to ensure type compatibility
+	return ssh.HostKeyCallback(callback)
 }
 
 // SSHSession Create an SSH Session
