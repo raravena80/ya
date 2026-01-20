@@ -21,25 +21,28 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	src string
-	dst string
-)
-
 // scpCmd represents the scp command
 var scpCmd = &cobra.Command{
-	Use:   "scp",
+	Use:   "scp [options] <source> <destination>",
 	Short: "Copy files to multiple servers",
 	Long: `Copy files to multiple servers.
 You can specify the source and destination files,
 the source files are local and the destination files
-are in the remote servers.`,
+are in the remote servers.
+
+Arguments:
+  <source>       Source file or directory (local)
+  <destination>  Destination file or directory (remote)
+
+Example:
+  ya scp -m host1,host2 -u user /path/to/file /remote/path`,
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		options := BuildCommonOptions()
 		options = append(options,
-			common.SetSource(viper.GetString("ya.scp.source")))
+			common.SetSource(args[0]))
 		options = append(options,
-			common.SetDestination(viper.GetString("ya.scp.destination")))
+			common.SetDestination(args[1]))
 		options = append(options,
 			common.SetIsRecursive(viper.GetBool("ya.scp.recursive")))
 		options = append(options,
@@ -51,10 +54,6 @@ are in the remote servers.`,
 func init() {
 	// Add scpCmd to cobra
 	RootCmd.AddCommand(scpCmd)
-	scpCmd.Flags().StringVarP(&src, "src", "f", "", "Source file or directory")
-	viper.BindPFlag("ya.scp.src", sshCmd.Flags().Lookup("source"))
-	scpCmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination file or directory")
-	viper.BindPFlag("ya.scp.dst", sshCmd.Flags().Lookup("destination"))
 	scpCmd.Flags().BoolP("recursive", "r", false, "Set recursive copy")
 	viper.BindPFlag("ya.scp.recursive", scpCmd.Flags().Lookup("recursive"))
 }
