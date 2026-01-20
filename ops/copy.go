@@ -16,16 +16,42 @@ package ops
 
 import (
 	"fmt"
-	"github.com/raravena80/ya/common"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/raravena80/ya/common"
+	"golang.org/x/crypto/ssh"
 )
 
 // DefaultSCPPath is the default path to the scp binary
 const DefaultSCPPath = "/usr/bin/scp"
 
+// validatePath checks a file path for potential security issues.
+// It returns an error if the path contains directory traversal components.
+func validatePath(path string) error {
+	// Check for path traversal components in the original path
+	if strings.Contains(path, "..") {
+		return fmt.Errorf("path traversal detected: %s", path)
+	}
+	return nil
+}
+
+// validateSCPPath checks if the SCP binary exists and is executable.
+func validateSCPPath(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("SCP binary not found: %w", err)
+	}
+	if info.Mode().Perm()&0111 == 0 {
+		return fmt.Errorf("SCP binary is not executable: %s", path)
+	}
+	return nil
+}
+
+// processError handles error output with optional verbose logging.
+// If verbose is true, the error message is written to errPipe.
 func processError(err error, message string, errPipe io.Writer, verbose bool) error {
 	if (err != nil) && verbose {
 		fmt.Fprintln(errPipe, message, err.Error())
@@ -109,6 +135,18 @@ func sendFile(srcFile string, srcFileInfo os.FileInfo, procWriter, errPipe io.Wr
 }
 
 func executeCopy(opt common.Options, hostname string, config *ssh.ClientConfig) executeResult {
+	// Validate source path for security
+	if err := validatePath(opt.Src); err != nil {
+		return makeExecResult(hostname, "", err)
+	}
+	// Validate destination path for security
+	if err := validatePath(opt.Dst); err != nil {
+		return makeExecResult(hostname, "", err)
+	}
+	// Validate SCP binary exists and is executable
+	if err := validateSCPPath(DefaultSCPPath); err != nil {
+		return makeExecResult(hostname, "", err)
+	}
 
 	var targetDir string
 

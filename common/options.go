@@ -14,7 +14,8 @@
 
 package common
 
-// Options Main options struct
+// Options holds the configuration for SSH/SCP operations.
+// It contains connection details, authentication settings, and operation-specific parameters.
 type Options struct {
 	Machines     []string
 	Port         int

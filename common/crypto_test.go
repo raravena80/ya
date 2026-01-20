@@ -280,3 +280,60 @@ func TestMakeKeyringErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestMakeSignerPermissions(t *testing.T) {
+	tests := []struct {
+		name        string
+		keyname     string
+		permissions os.FileMode
+		expectError bool
+	}{
+		{name: "Key with secure permissions 0600",
+			keyname:     "/tmp/testkey_600",
+			permissions: 0600,
+			expectError: false},
+		{name: "Key with secure permissions 0400",
+			keyname:     "/tmp/testkey_400",
+			permissions: 0400,
+			expectError: false},
+		{name: "Key with insecure permissions 0644",
+			keyname:     "/tmp/testkey_644",
+			permissions: 0644,
+			expectError: false}, // Should succeed but with warning
+		{name: "Key with insecure permissions 0755",
+			keyname:     "/tmp/testkey_755",
+			permissions: 0755,
+			expectError: false}, // Should succeed but with warning
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.WriteFile(tt.keyname, testdata.PEMBytes["rsa"], tt.permissions)
+			defer os.Remove(tt.keyname)
+
+			_, err := makeSigner(tt.keyname)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for %s, got nil", tt.name)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error for %s: %v", tt.name, err)
+			}
+		})
+	}
+}
+
+func TestMakeSignerLargeFile(t *testing.T) {
+	// Test that makeSigner handles large files correctly by limiting read size
+	largeKeyPath := "/tmp/testkey_large"
+	// Create a file larger than maxKeySize with valid key at the beginning
+	largeContent := make([]byte, maxKeySize+1024)
+	copy(largeContent, testdata.PEMBytes["rsa"])
+	os.WriteFile(largeKeyPath, largeContent, 0600)
+	defer os.Remove(largeKeyPath)
+
+	_, err := makeSigner(largeKeyPath)
+	// Should succeed because we limit the read size
+	if err != nil {
+		t.Errorf("Unexpected error for large file: %v", err)
+	}
+}

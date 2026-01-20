@@ -15,6 +15,7 @@
 package ops
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// executeResult holds the result of an SSH operation.
 type executeResult struct {
 	result string
 	err    error
@@ -31,7 +33,7 @@ type executeResult struct {
 
 type execFuncType func(common.Options, string, *ssh.ClientConfig) executeResult
 
-// Makes a common execResult
+// makeExecResult creates a new executeResult with the given hostname, output, and error.
 func makeExecResult(hostname, output string, err error) executeResult {
 	return executeResult{
 		result: hostname + ":\n" + output,
@@ -64,8 +66,18 @@ func getHostKeyCallback(opt common.Options) ssh.HostKeyCallback {
 	return ssh.HostKeyCallback(callback)
 }
 
-// SSHSession Create an SSH Session
+// SSHSession creates SSH sessions to multiple machines and executes commands or copy operations.
+// It takes functional options to configure the SSH connection and runs the operation concurrently
+// on all specified machines. Returns true if all operations succeed, false otherwise.
+// This function uses a background context. For cancellation support, use SSHSessionWithContext.
 func SSHSession(options ...func(*common.Options)) bool {
+	return SSHSessionWithContext(context.Background(), options...)
+}
+
+// SSHSessionWithContext creates SSH sessions with context support for cancellation.
+// If the context is cancelled before all operations complete, the function returns early.
+// Returns true if all operations succeed, false otherwise.
+func SSHSessionWithContext(ctx context.Context, options ...func(*common.Options)) bool {
 	var execFunc execFuncType
 
 	opt := common.Options{}
@@ -98,6 +110,13 @@ func SSHSession(options ...func(*common.Options)) bool {
 			execFunc = executeCopy
 		}
 		go func(hostname string, execFunc execFuncType) {
+			select {
+			case <-ctx.Done():
+				fmt.Println(hostname, ":", ctx.Err())
+				done <- false
+				return
+			default:
+			}
 			res := execFunc(opt, hostname, config)
 			if res.err == nil {
 				fmt.Print(res.result)
@@ -111,8 +130,19 @@ func SSHSession(options ...func(*common.Options)) bool {
 
 	retval := true
 	for i := 0; i < len(opt.Machines); i++ {
-		if !<-done {
-			retval = false
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, drain remaining goroutines
+			go func() {
+				for j := i + 1; j < len(opt.Machines); j++ {
+					<-done
+				}
+			}()
+			return false
+		case success := <-done:
+			if !success {
+				retval = false
+			}
 		}
 	}
 	return retval
