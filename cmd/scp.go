@@ -15,11 +15,24 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/ops"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// validateScpArgs validates that exactly 2 arguments are provided
+func validateScpArgs(cmd *cobra.Command, args []string) error {
+	if len(args) < 2 {
+		return fmt.Errorf("source and destination are required\n\nExample: ya scp /path/to/file /remote/path -m host1")
+	}
+	if len(args) > 2 {
+		return fmt.Errorf("too many arguments\n\nUsage: ya scp [options] <source> <destination>")
+	}
+	return nil
+}
 
 // scpCmd represents the scp command
 var scpCmd = &cobra.Command{
@@ -36,7 +49,7 @@ Arguments:
 
 Example:
   ya scp -m host1,host2 -u user /path/to/file /remote/path`,
-	Args: cobra.ExactArgs(2),
+	Args: validateScpArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		options := BuildCommonOptions()
 		options = append(options,
@@ -47,6 +60,16 @@ Example:
 			common.SetIsRecursive(viper.GetBool("ya.scp.recursive")))
 		options = append(options,
 			common.SetOp("scp"))
+
+		// Build options to get machine list for info message
+		opt := common.Options{}
+		for _, option := range options {
+			option(&opt)
+		}
+
+		// Show info message before proceeding
+		fmt.Printf("Copying %s -> %s on %d host(s)\n", args[0], args[1], len(opt.Machines))
+
 		ops.SSHSession(options...)
 	},
 }
