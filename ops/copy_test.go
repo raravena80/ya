@@ -17,22 +17,21 @@ import (
 	"github.com/raravena80/ya/common"
 	"github.com/raravena80/ya/test"
 	"golang.org/x/crypto/ssh/testdata"
-	"io/ioutil"
 	"os"
 	"testing"
 )
 
 func init() {
 	// Create files to test scp locally
-	ioutil.WriteFile("/tmp/removethis1", []byte("Sample file 1  uu"), 0644)
-	ioutil.WriteFile("/tmp/removethisnoperm", []byte("Sample file 2 uu"), 0000)
+	os.WriteFile("/tmp/removethis1", []byte("Sample file 1  uu"), 0644)
+	os.WriteFile("/tmp/removethisnoperm", []byte("Sample file 2 uu"), 0000)
 	os.Mkdir("/tmp/removethisdir", 0777)
 	os.Mkdir("/tmp/removethisdir/removethisotherdir", 0777)
-	ioutil.WriteFile("/tmp/removethisdir/removefile", []byte("Sample file in dir"), 0644)
-	ioutil.WriteFile("/tmp/removethisdir/removethisotherdir/file1", []byte("another_file"), 0644)
+	os.WriteFile("/tmp/removethisdir/removefile", []byte("Sample file in dir"), 0644)
+	os.WriteFile("/tmp/removethisdir/removethisotherdir/file1", []byte("another_file"), 0644)
 	os.Mkdir("/tmp/anotherremovethisdir", 0777)
 	os.Mkdir("/tmp/anotherremovethisdir/second", 0777)
-	ioutil.WriteFile("/tmp/anotherremovethisdir/second/file1", []byte("another_file"), 000)
+	os.WriteFile("/tmp/anotherremovethisdir/second/file1", []byte("another_file"), 000)
 }
 
 func TestCopy(t *testing.T) {
@@ -231,7 +230,7 @@ func TestCopy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
-				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
+				os.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
 			returned := SSHSession(common.SetMachines(tt.machines),
 				common.SetUser(tt.user),

@@ -20,7 +20,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/testdata"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"reflect"
@@ -98,7 +97,7 @@ func TestMakeSigner(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Write Content of the key to the Keyname file
-			ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
+			os.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			returned, _ := makeSigner(tt.key.Keyname)
 			if !reflect.DeepEqual(returned, tt.expected) {
 				t.Errorf("Value received: %v expected %v", returned, tt.expected)
@@ -185,7 +184,7 @@ func TestMakeKeyring(t *testing.T) {
 			}
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
-				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
+				os.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
 			signers := MakeKeyring(tt.key.Keyname, sshAgentSocket, tt.useagent)
 			returned := signers[0].PublicKey().Marshal()
@@ -240,7 +239,7 @@ func TestMakeSignerErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Invalid key file" {
-				ioutil.WriteFile(tt.keyname, []byte("invalid key content"), 0644)
+				os.WriteFile(tt.keyname, []byte("invalid key content"), 0644)
 				defer os.Remove(tt.keyname)
 			}
 

@@ -19,7 +19,6 @@ import (
 	"github.com/raravena80/ya/test"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/testdata"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -125,7 +124,7 @@ func TestCmd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Write Content of the key to the Keyname file
 			if tt.key.Keyname != "" {
-				ioutil.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
+				os.WriteFile(tt.key.Keyname, tt.key.Content, 0644)
 			}
 			returned := SSHSession(common.SetMachines(tt.machines),
 				common.SetUser(tt.user),
