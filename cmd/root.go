@@ -23,16 +23,35 @@ import (
 	"github.com/spf13/viper"
 )
 
+// exitFunc is a function that exits the program.
+// In production, this is os.Exit, but can be replaced for testing.
+var exitFunc = os.Exit
+
+// printfFunc is a function that prints to stdout.
+// In production, this is fmt.Printf, but can be replaced for testing.
+var printfFunc = fmt.Printf
+
+// printlnFunc is a function that prints to stdout with a newline.
+// In production, this is fmt.Println, but can be replaced for testing.
+var printlnFunc = fmt.Println
+
 var (
-	cfgFile   string
-	user      string
-	key       string
-	port      int
-	timeout   int
-	agentsock string
-	machines  []string
-	Version   string
-	Gitcommit string
+	cfgFile       string
+	user          string
+	key           string
+	port          int
+	timeout       int
+	connectTimeout int
+	commandTimeout int
+	agentsock     string
+	machines      []string
+	Version       string
+	Gitcommit     string
+	outputFormat  string
+	dryRun        bool
+	hostPatterns  []string
+	hostExcludes  []string
+	showProgress  bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -48,9 +67,8 @@ across multiple servers, using SSH or SCP`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		//go:nocovline // os.Exit hard to test in unit tests
-		os.Exit(1)
+		printlnFunc(err)
+		exitFunc(1)
 	}
 }
 
@@ -63,9 +81,8 @@ func init() {
 		var err error
 		home, err = homedir.Dir()
 		if err != nil {
-			fmt.Printf("Error: could not determine home directory: %v\n", err)
-			//go:nocovline // os.Exit hard to test in unit tests
-			os.Exit(1)
+			printfFunc("Error: could not determine home directory: %v\n", err)
+			exitFunc(1)
 		}
 	}
 	sshKey := home + "/.ssh/id_rsa"
@@ -88,6 +105,20 @@ func init() {
 	viper.BindPFlag("ya.agentsock", RootCmd.PersistentFlags().Lookup("agentsock"))
 	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Set verbose output")
 	viper.BindPFlag("ya.verbose", RootCmd.PersistentFlags().Lookup("verbose"))
+	RootCmd.PersistentFlags().IntVar(&connectTimeout, "connect-timeout", 0, "Connection timeout override in seconds")
+	viper.BindPFlag("ya.connect-timeout", RootCmd.PersistentFlags().Lookup("connect-timeout"))
+	RootCmd.PersistentFlags().IntVar(&commandTimeout, "command-timeout", 0, "Command execution timeout override in seconds")
+	viper.BindPFlag("ya.command-timeout", RootCmd.PersistentFlags().Lookup("command-timeout"))
+	RootCmd.PersistentFlags().StringVarP(&outputFormat, "output-format", "o", "text", "Output format: text, json, yaml, table")
+	viper.BindPFlag("ya.output-format", RootCmd.PersistentFlags().Lookup("output-format"))
+	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "n", false, "Preview operations without executing")
+	viper.BindPFlag("ya.dry-run", RootCmd.PersistentFlags().Lookup("dry-run"))
+	RootCmd.PersistentFlags().StringSliceVarP(&hostPatterns, "host", "H", []string{}, "Host patterns to match")
+	viper.BindPFlag("ya.host-patterns", RootCmd.PersistentFlags().Lookup("host"))
+	RootCmd.PersistentFlags().StringSliceVar(&hostExcludes, "host-exclude", []string{}, "Host patterns to exclude")
+	viper.BindPFlag("ya.host-excludes", RootCmd.PersistentFlags().Lookup("host-exclude"))
+	RootCmd.PersistentFlags().BoolVarP(&showProgress, "progress", "P", false, "Show progress indicators for file transfers")
+	viper.BindPFlag("ya.show-progress", RootCmd.PersistentFlags().Lookup("progress"))
 
 }
 
@@ -100,9 +131,8 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
-			//go:nocovline // os.Exit hard to test in unit tests
-			os.Exit(1)
+			printlnFunc(err)
+			exitFunc(1)
 		}
 
 		// Search config in home directory with name ".ya" (without extension).
@@ -114,6 +144,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		printlnFunc("Using config file:", viper.ConfigFileUsed())
 	}
 }

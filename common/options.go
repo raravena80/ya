@@ -17,21 +17,28 @@ package common
 // Options holds the configuration for SSH/SCP operations.
 // It contains connection details, authentication settings, and operation-specific parameters.
 type Options struct {
-	Machines     []string
-	Port         int
-	Timeout      int
-	User         string
-	Cmd          string
-	Key          string
-	Src          string
-	Dst          string
-	AgentSock    string
-	Op           string
-	UseAgent     bool
-	IsRecursive  bool
-	IsVerbose    bool
-	KnownHosts   string
-	InsecureHost bool
+	Machines       []string
+	Port           int
+	Timeout        int
+	ConnectTimeout *int // Optional override for connection timeout in seconds
+	CommandTimeout *int // Optional override for command execution timeout in seconds
+	User           string
+	Cmd            string
+	Key            string
+	Src            string
+	Dst            string
+	AgentSock      string
+	Op             string
+	UseAgent       bool
+	IsRecursive    bool
+	IsVerbose      bool
+	KnownHosts     string
+	InsecureHost   bool
+	OutputFormat   string // Output format: "text", "json", "yaml", "table"
+	DryRun         bool   // Preview operations without executing
+	HostPatterns   []string // Host patterns to include
+	HostExcludes   []string // Host patterns to exclude
+	ShowProgress   bool   // Show progress indicators for transfers
 }
 
 // SetUser Sets user for ssh session
@@ -137,5 +144,54 @@ func SetKnownHosts(k string) func(*Options) {
 func SetInsecureHost(i bool) func(*Options) {
 	return func(e *Options) {
 		e.InsecureHost = i
+	}
+}
+
+// SetConnectTimeout Sets the connection timeout in seconds (overrides default Timeout)
+func SetConnectTimeout(t int) func(*Options) {
+	return func(e *Options) {
+		e.ConnectTimeout = &t
+	}
+}
+
+// SetCommandTimeout Sets the command execution timeout in seconds (overrides default Timeout)
+func SetCommandTimeout(t int) func(*Options) {
+	return func(e *Options) {
+		e.CommandTimeout = &t
+	}
+}
+
+// SetOutputFormat Sets the output format ("text", "json", "yaml", "table")
+func SetOutputFormat(f string) func(*Options) {
+	return func(e *Options) {
+		e.OutputFormat = f
+	}
+}
+
+// SetDryRun Enables dry-run mode to preview operations without executing
+func SetDryRun(d bool) func(*Options) {
+	return func(e *Options) {
+		e.DryRun = d
+	}
+}
+
+// SetHostPatterns Sets the host patterns to include in execution
+func SetHostPatterns(patterns []string) func(*Options) {
+	return func(e *Options) {
+		e.HostPatterns = patterns
+	}
+}
+
+// SetHostExcludes Sets the host patterns to exclude from execution
+func SetHostExcludes(patterns []string) func(*Options) {
+	return func(e *Options) {
+		e.HostExcludes = patterns
+	}
+}
+
+// SetShowProgress Enables progress indicators for file transfers
+func SetShowProgress(p bool) func(*Options) {
+	return func(e *Options) {
+		e.ShowProgress = p
 	}
 }

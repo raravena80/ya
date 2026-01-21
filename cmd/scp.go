@@ -37,9 +37,9 @@ are in the remote servers.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		options := BuildCommonOptions()
 		options = append(options,
-			common.SetSource(viper.GetString("ya.scp.source")))
+			common.SetSource(viper.GetString("ya.scp.src")))
 		options = append(options,
-			common.SetDestination(viper.GetString("ya.scp.destination")))
+			common.SetDestination(viper.GetString("ya.scp.dst")))
 		options = append(options,
 			common.SetIsRecursive(viper.GetBool("ya.scp.recursive")))
 		options = append(options,
@@ -52,9 +52,9 @@ func init() {
 	// Add scpCmd to cobra
 	RootCmd.AddCommand(scpCmd)
 	scpCmd.Flags().StringVarP(&src, "src", "f", "", "Source file or directory")
-	viper.BindPFlag("ya.scp.src", sshCmd.Flags().Lookup("source"))
+	viper.BindPFlag("ya.scp.src", scpCmd.Flags().Lookup("src"))
 	scpCmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination file or directory")
-	viper.BindPFlag("ya.scp.dst", sshCmd.Flags().Lookup("destination"))
+	viper.BindPFlag("ya.scp.dst", scpCmd.Flags().Lookup("dst"))
 	scpCmd.Flags().BoolP("recursive", "r", false, "Set recursive copy")
 	viper.BindPFlag("ya.scp.recursive", scpCmd.Flags().Lookup("recursive"))
 }

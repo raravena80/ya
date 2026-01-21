@@ -36,5 +36,39 @@ func BuildCommonOptions() []func(*common.Options) {
 		common.SetUseAgent(viper.GetBool("ya.useagent")))
 	options = append(options,
 		common.SetTimeout(viper.GetInt("ya.timeout")))
+
+	// Optional timeout overrides
+	if ct := viper.GetInt("ya.connect-timeout"); ct > 0 {
+		options = append(options, common.SetConnectTimeout(ct))
+	}
+	if ct := viper.GetInt("ya.command-timeout"); ct > 0 {
+		options = append(options, common.SetCommandTimeout(ct))
+	}
+
+	// Output format
+	if fmt := viper.GetString("ya.output-format"); fmt != "" {
+		options = append(options, common.SetOutputFormat(fmt))
+	}
+
+	// Dry-run mode
+	if viper.GetBool("ya.dry-run") {
+		options = append(options, common.SetDryRun(true))
+	}
+
+	// Host patterns
+	if patterns := viper.GetStringSlice("ya.host-patterns"); len(patterns) > 0 {
+		options = append(options, common.SetHostPatterns(patterns))
+	}
+
+	// Host excludes
+	if excludes := viper.GetStringSlice("ya.host-excludes"); len(excludes) > 0 {
+		options = append(options, common.SetHostExcludes(excludes))
+	}
+
+	// Progress indicators
+	if viper.GetBool("ya.show-progress") {
+		options = append(options, common.SetShowProgress(true))
+	}
+
 	return options
 }

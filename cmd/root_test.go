@@ -173,3 +173,80 @@ func TestRootCmdStructure(t *testing.T) {
 		}
 	}
 }
+
+func TestExecute(t *testing.T) {
+	// Save original functions
+	origExit := exitFunc
+	origPrintln := printlnFunc
+	defer func() {
+		exitFunc = origExit
+		printlnFunc = origPrintln
+	}()
+
+	tests := []struct {
+		name       string
+		args       []string
+		exitCalled bool
+	}{
+		{name: "Execute with help - no exit",
+			args:       []string{"--help"},
+			exitCalled: false},
+		{name: "Execute with invalid command - exit called",
+			args:       []string{"--invalid-flag"},
+			exitCalled: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exitCalled := false
+			exitFunc = func(code int) {
+				exitCalled = true
+			}
+			printlnFunc = func(a ...interface{}) (n int, err error) {
+				return 0, nil
+			}
+
+			RootCmd.SetArgs(tt.args)
+			Execute()
+
+			if tt.exitCalled && !exitCalled {
+				t.Error("Expected exit to be called, but it wasn't")
+			}
+			if !tt.exitCalled && exitCalled {
+				t.Error("Exit was called when it shouldn't have been")
+			}
+		})
+	}
+}
+
+func TestInitConfigExitPath(t *testing.T) {
+	// Save original functions
+	origExit := exitFunc
+	origPrintln := printlnFunc
+	origHomedirDir := os.Getenv("HOME")
+	defer func() {
+		exitFunc = origExit
+		printlnFunc = origPrintln
+		os.Setenv("HOME", origHomedirDir)
+	}()
+
+	t.Run("initConfig handles missing homedir", func(t *testing.T) {
+		exitFunc = func(code int) {
+			if code != 1 {
+				t.Errorf("Expected exit code 1, got %d", code)
+			}
+		}
+		printlnFunc = func(a ...interface{}) (n int, err error) {
+			return 0, nil
+		}
+
+		// Set HOME to empty to trigger the error path
+		os.Unsetenv("HOME")
+
+		// Call initConfig - it should handle the error internally
+		initConfig()
+
+		// The initConfig function should handle the error internally
+		// We're just verifying it doesn't panic
+	})
+}
