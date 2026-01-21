@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/raravena80/ya/common"
@@ -29,6 +30,136 @@ import (
 type executeResult struct {
 	result string
 	err    error
+}
+
+// Formatter defines the interface for output formatting.
+type Formatter interface {
+	FormatResult(hostname, output string, err error) string
+	FormatError(err error) string
+}
+
+// TextFormatter implements plain text output formatting.
+type TextFormatter struct{}
+
+func (f *TextFormatter) FormatResult(hostname, output string, err error) string {
+	return hostname + ":\n" + output
+}
+
+func (f *TextFormatter) FormatError(err error) string {
+	return fmt.Sprintf("Error: %v", err)
+}
+
+// JSONFormatter implements JSON output formatting.
+type JSONFormatter struct{}
+
+func (f *JSONFormatter) FormatResult(hostname, output string, err error) string {
+	var status string
+	if err != nil {
+		status = fmt.Sprintf("\"error\": %q", err.Error())
+	} else {
+		status = fmt.Sprintf("\"output\": %q", output)
+	}
+	return fmt.Sprintf(`{"host": %q, %s}`, hostname, status)
+}
+
+func (f *JSONFormatter) FormatError(err error) string {
+	return fmt.Sprintf(`{"error": %q}`, err.Error())
+}
+
+// matchesPattern checks if a hostname matches a glob pattern.
+// Supports wildcards: * (matches any sequence) and ? (matches any single character).
+func matchesPattern(host, pattern string) bool {
+	// First try filepath.Match for standard glob matching
+	matched, err := filepath.Match(pattern, host)
+	if matched && err == nil {
+		return true
+	}
+
+	// If that doesn't work, try manual wildcard matching
+	// Convert glob pattern to a simple match
+	return globMatch(host, pattern)
+}
+
+// globMatch performs simple glob pattern matching without using filepath.Match.
+// * matches any sequence of characters (including empty)
+// ? matches any single character
+func globMatch(host, pattern string) bool {
+	hostIdx := 0
+	patIdx := 0
+	hostLen := len(host)
+	patLen := len(pattern)
+
+	// Track positions for backtracking with *
+	var lastStarPatIdx, lastStarHostIdx int = -1, -1
+
+	for hostIdx < hostLen {
+		if patIdx < patLen && (pattern[patIdx] == '?' || pattern[patIdx] == host[hostIdx]) {
+			// Character matches or ? wildcard
+			patIdx++
+			hostIdx++
+		} else if patIdx < patLen && pattern[patIdx] == '*' {
+			// Remember star position and current host position
+			lastStarPatIdx = patIdx
+			lastStarHostIdx = hostIdx
+			patIdx++ // Move past the *
+		} else if lastStarPatIdx != -1 {
+			// We have a * to backtrack to - try matching one more character with *
+			patIdx = lastStarPatIdx + 1
+			lastStarHostIdx++
+			hostIdx = lastStarHostIdx
+		} else {
+			// No match and no star to backtrack to
+			return false
+		}
+	}
+
+	// Handle remaining * in pattern
+	for patIdx < patLen && pattern[patIdx] == '*' {
+		patIdx++
+	}
+
+	return patIdx == patLen
+}
+
+// shouldIncludeHost determines if a host should be included based on patterns.
+func shouldIncludeHost(host string, patterns, excludes []string) bool {
+	// If no patterns specified and no excludes specified, include all hosts
+	if len(patterns) == 0 && len(excludes) == 0 {
+		return true
+	}
+
+	// Check exclusions first - exclusions always take priority
+	for _, pattern := range excludes {
+		if matchesPattern(host, pattern) {
+			return false
+		}
+	}
+
+	// If no inclusion patterns specified, include remaining hosts
+	// (excludes have already been filtered out above)
+	if len(patterns) == 0 {
+		return true
+	}
+
+	// Check inclusion patterns - only include if matches a pattern
+	for _, pattern := range patterns {
+		if matchesPattern(host, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// filterHosts returns the list of hosts that match the inclusion/exclusion patterns.
+func filterHosts(hosts []string, patterns, excludes []string) []string {
+	var filtered []string
+	for _, host := range hosts {
+		if shouldIncludeHost(host, patterns, excludes) {
+			filtered = append(filtered, host)
+		}
+	}
+	return filtered
 }
 
 type execFuncType func(common.Options, string, *ssh.ClientConfig) executeResult
@@ -85,8 +216,36 @@ func SSHSessionWithContext(ctx context.Context, options ...func(*common.Options)
 		option(&opt)
 	}
 
-	// in opt.Timeout seconds the message will come to timeout channel
-	done := make(chan bool, len(opt.Machines))
+	// Filter hosts based on patterns
+	machines := filterHosts(opt.Machines, opt.HostPatterns, opt.HostExcludes)
+
+	// Handle dry-run mode
+	if opt.DryRun {
+		fmt.Fprintln(os.Stderr, "DRY-RUN: Previewing operations (no actual execution)")
+		for _, m := range machines {
+			if opt.Op == "ssh" {
+				fmt.Printf("DRY-RUN: Would execute on %s: %s\n", m, opt.Cmd)
+			} else if opt.Op == "scp" {
+				if opt.IsRecursive {
+					fmt.Printf("DRY-RUN: Would copy (recursive) %s to %s:%s\n", opt.Src, m, opt.Dst)
+				} else {
+					fmt.Printf("DRY-RUN: Would copy %s to %s:%s\n", opt.Src, m, opt.Dst)
+				}
+			}
+		}
+		return true
+	}
+
+	// Determine connection timeout
+	var connectTimeout time.Duration
+	if opt.ConnectTimeout != nil {
+		connectTimeout = time.Duration(*opt.ConnectTimeout) * time.Second
+	} else {
+		connectTimeout = time.Duration(opt.Timeout) * time.Second
+	}
+
+	// done channel for synchronization
+	done := make(chan bool, len(machines))
 
 	sshAuth := []ssh.AuthMethod{
 		ssh.PublicKeys(common.MakeKeyring(
@@ -98,10 +257,23 @@ func SSHSessionWithContext(ctx context.Context, options ...func(*common.Options)
 		User:            opt.User,
 		Auth:            sshAuth,
 		HostKeyCallback: getHostKeyCallback(opt),
-		Timeout:         time.Duration(opt.Timeout) * time.Second,
+		Timeout:         connectTimeout,
 	}
 
-	for _, m := range opt.Machines {
+	// Get formatter based on output format
+	var formatter Formatter = &TextFormatter{}
+	switch opt.OutputFormat {
+	case "json":
+		formatter = &JSONFormatter{}
+	case "yaml":
+		// YAML formatter - simple implementation
+		formatter = &TextFormatter{} // Fall back to text for now
+	case "table":
+		// Table formatter - simple implementation
+		formatter = &TextFormatter{} // Fall back to text for now
+	}
+
+	for _, m := range machines {
 		// we'll write results into the buffered channel of strings
 		switch opt.Op {
 		case "ssh":
@@ -119,7 +291,11 @@ func SSHSessionWithContext(ctx context.Context, options ...func(*common.Options)
 			}
 			res := execFunc(opt, hostname, config)
 			if res.err == nil {
-				fmt.Print(res.result)
+				if opt.OutputFormat == "json" {
+					fmt.Println(formatter.FormatResult(hostname, res.result, nil))
+				} else {
+					fmt.Print(res.result)
+				}
 				done <- true
 			} else {
 				fmt.Println(res.result, "\n", res.err)
@@ -129,12 +305,12 @@ func SSHSessionWithContext(ctx context.Context, options ...func(*common.Options)
 	}
 
 	retval := true
-	for i := 0; i < len(opt.Machines); i++ {
+	for i := 0; i < len(machines); i++ {
 		select {
 		case <-ctx.Done():
 			// Context was cancelled, drain remaining goroutines
 			go func() {
-				for j := i + 1; j < len(opt.Machines); j++ {
+				for j := i + 1; j < len(machines); j++ {
 					<-done
 				}
 			}()
